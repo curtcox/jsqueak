@@ -1,15 +1,18 @@
-package JSqueak;
+package JSqueak.io.impl;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import JSqueak.io.Keyboard;
+import JSqueak.vm.SqueakVM;
+
 /**
  * I'm JSqueak's keyboard driver.  I convert Java KeyEvents into Squeak
  * key and modifier key press events. 
  */
-class KeyboardQueue implements KeyListener
+public class KeyboardQueue implements Keyboard
 {
     /**
      * The size of the character queue.
@@ -67,51 +70,46 @@ class KeyboardQueue implements KeyListener
         KeyEvent.VK_BACK_QUOTE,
     };
     
-    private final SqueakVM fSqueakVM;
+    private final SqueakVM vm;
     
-    private final List fCharQueue = new ArrayList();
+    private final List<Character> fCharQueue = new ArrayList<Character>();
     
     private int fModifierKeys = 0;
     
-    KeyboardQueue( SqueakVM squeakVM )
-    {
-        fSqueakVM = squeakVM;
+    public KeyboardQueue( SqueakVM squeakVM ) {
+        vm = squeakVM;
     }
     
     // -- JSqueak interface
     
-    int peek() 
-    {
-        return fCharQueue.isEmpty() ? 0 : keycode( (Character) fCharQueue.get( 0 ) ); 
+    @Override
+    public int keyboardPeek() {
+        return fCharQueue.isEmpty() ? 0 : keycode( fCharQueue.get( 0 ) ); 
     }
     
-    int next() 
-    {
+    @Override
+    public int keyboardNext() {
         return keycode( (Character) fCharQueue.remove( 0 ) ); 
     }
 
-    int modifierKeys() 
-    {
+    public int modifierKeys() {
         return fModifierKeys;
     }
     
     // -- KeyListener methods
     
-    public void keyPressed( KeyEvent event ) 
-    {
+    public void keyPressed( KeyEvent event ) {
         fModifierKeys = mapModifierKey( event );
         char keyChar = mapSpecialKey( event );
         if ( keyChar != KeyEvent.CHAR_UNDEFINED )
             addToQueue( keyChar );
     }
     
-    public void keyReleased( KeyEvent event ) 
-    {
+    public void keyReleased( KeyEvent event ) {
         fModifierKeys = mapModifierKey( event );
     }
     
-    public  void keyTyped( KeyEvent event )
-    {
+    public  void keyTyped( KeyEvent event ) {
         // Ignore the return key, mapSpecialKey() took care of it
         if ( event.getKeyChar() == '\n' )
             return;
@@ -121,16 +119,14 @@ class KeyboardQueue implements KeyListener
 
     // -- Private methods
     
-    private void addToQueue( char keyChar )
-    {
+    private void addToQueue( char keyChar ) {
         if ( fCharQueue.size() < TYPEAHEAD_LIMIT )
             fCharQueue.add( new Character( keyChar ) );
             
-        fSqueakVM.wakeVM();
+        vm.wakeVM();
     }
     
-    private static int mapModifierKey( KeyEvent event ) 
-    {
+    private static int mapModifierKey( KeyEvent event ) {
         int modifiers = 0;
         if ( event.isShiftDown() )
             modifiers |= SHIFT_KEY;
@@ -142,8 +138,7 @@ class KeyboardQueue implements KeyListener
         return modifiers;
     }
     
-    private static char mapSpecialKey( KeyEvent evt ) 
-    {
+    private static char mapSpecialKey( KeyEvent evt ) {
         int specialKeyIndex = 0;
         while ( specialKeyIndex < JAVA_KEYS.length && JAVA_KEYS[ specialKeyIndex ] != evt.getKeyCode() ) 
             specialKeyIndex++;
@@ -156,8 +151,7 @@ class KeyboardQueue implements KeyListener
         return KeyEvent.CHAR_UNDEFINED;
     }
 
-    private static int keycode( Character c ) 
-    {
+    private static int keycode( Character c ) {
         return c.charValue() & 255; 
     }
 }

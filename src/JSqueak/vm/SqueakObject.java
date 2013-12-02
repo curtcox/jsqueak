@@ -21,10 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package JSqueak;
+package JSqueak.vm;
 
 import java.util.Arrays;
 import java.util.Hashtable;
+
+import JSqueak.Squeak;
+import JSqueak.image.SqueakImage;
 
 /**
  * @author Daniel Ingalls
@@ -40,33 +43,45 @@ import java.util.Hashtable;
  */
 public class SqueakObject //Later make variants for common formats
 {
-    short hash;        //12-bit Squeak hash
+    private short hash;        //12-bit Squeak hash
     short format;      // 4-bit Squeak format
-    Object sqClass;  //squeak class
+    public short getFormat() {
+		return format;
+	}
+
+	public Object getBits() {
+		return imageData;
+	}
+
+	public byte[] getBitsAsMethodBytes() {
+		return (byte[])imageData;
+	}
+
+	Object sqClass;  //squeak class
     Object[] pointers; //pointer fields; fixed as well as indexable
-    Object bits;       //indexable binary data (bytes or ints)
+    Object imageData;       //indexable binary data (bytes or ints)
     
-    SqueakObject(Integer cls, int fmt, int hsh, int[] imageData) 
+    public SqueakObject(Integer squeakClass, int fmt, int hsh, int[] imageData) 
     {
         //Initial creation from SqueakImage, with unmapped data
-        sqClass= cls;
+        sqClass= squeakClass;
         format= (short)fmt;
-        hash= (short)hsh;
-        bits= imageData; 
+        setHash((short)hsh);
+        this.imageData= imageData; 
     }
 
     SqueakObject(SqueakImage img) 
     {
         //Creation of stub object (no pointers or bits)
-        hash= img.registerObject(this); 
+        setHash(img.registerObject(this)); 
     }
 
-    SqueakObject(SqueakImage img, SqueakObject cls, int indexableSize, SqueakObject filler) 
+    SqueakObject(SqueakImage img, SqueakObject squeakClass, int indexableSize, SqueakObject filler) 
     {
         //Creation of objects from Squeak
         this(img);
-        sqClass= cls;
-        int instSpec= SqueakVM.intFromSmall(cls.getPointerI(Squeak.Class_format));
+        sqClass= squeakClass;
+        int instSpec= SqueakVM.intFromSmall(squeakClass.getPointerI(Squeak.CLASS_FORMAT));
         int instSize= ((instSpec>>1) & 0x3F) + ((instSpec>>10) & 0xC0) - 1; //0-255
         format= ((short) ((instSpec>>7) & 0xF)); //This is the 0-15 code
         
@@ -80,15 +95,17 @@ public class SqueakObject //Later make variants for common formats
             else
             {
                 if (indexableSize>=0)
-                    bits= new int[indexableSize]; 
+                    imageData= new int[indexableSize]; 
             }
         }
         else
         {
-            bits= new byte[indexableSize];  //Methods require further init of pointers
+            imageData= new byte[indexableSize];  //Methods require further init of pointers
         }
     }
 
+    
+    
 //      Definition of Squeak's format code...
 //
 //      Pointers only...
@@ -109,51 +126,59 @@ public class SqueakObject //Later make variants for common formats
 
 
     //General access
-    public SqueakObject getSqClass() 
-    {
+    public SqueakObject getSqClass() {
         return (SqueakObject) sqClass; 
     }
-        
-    public Object getPointer(int zeroBasedIndex) 
-    {
+    
+    public void setSqClass(Object sqClass) {
+    	this.sqClass = sqClass;
+    }
+     
+    public Object[] getPointers() {
+    	return pointers;
+    }
+    
+    public short getHash() {
+		return hash;
+	}
+
+	public void setHash(short hash) {
+		this.hash = hash;
+	}
+
+	public Object getPointer(int zeroBasedIndex) {
         return pointers[zeroBasedIndex]; 
     }
     
-    public SqueakObject getPointerNI(int zeroBasedIndex) 
-    {
+    public SqueakObject getPointerNI(int zeroBasedIndex) {
         //Returns only SqueakObjects, not Integers
         return (SqueakObject) pointers[zeroBasedIndex]; 
     }
     
-    public Integer getPointerI(int zeroBasedIndex) 
-    {
+    public Integer getPointerI(int zeroBasedIndex) {
         //Returns only SmallIntegers
         return (Integer) pointers[zeroBasedIndex]; 
     }
     
-    public void setPointer(int zeroBasedIndex, Object aPointer) 
-    {
+    public void setPointer(int zeroBasedIndex, Object aPointer) {
         pointers[zeroBasedIndex]= aPointer; 
     }
     
-    public int pointersSize() 
-    {
+    public int pointersSize() {
         return pointers==null? 0 : pointers.length; 
     }
     
-    public int bitsSize() 
-    {
-        if (bits==null) 
+    public int bitsSize() {
+        if (imageData==null) 
             return 0;
-        if (bits instanceof byte[]) 
-            return ((byte[])bits).length;
-        if (bits instanceof Double) 
+        if (imageData instanceof byte[]) 
+            return ((byte[])imageData).length;
+        if (imageData instanceof Double) 
             return 2;
-        return ((int[])bits).length; 
+        return ((int[])imageData).length; 
     }
     
-    public int instSize() //same as class.classInstSize, but faster from format
-    {
+    public int instSize() { //same as class.classInstSize, but faster from format
         if (format>4 || format==2) //indexable fields only 
             return 0; 
         if (format<2)  //indexable fields only
@@ -161,67 +186,57 @@ public class SqueakObject //Later make variants for common formats
         return ((SqueakObject)sqClass).classInstSize();  //0-255
     }
 
-    public int classInstSize() 
-    {
-        int instSpec= SqueakVM.intFromSmall(this.getPointerI(Squeak.Class_format));
+    public int classInstSize() {
+        int instSpec= SqueakVM.intFromSmall(this.getPointerI(Squeak.CLASS_FORMAT));
         return ((instSpec>>1) & 0x3F) + ((instSpec>>10) & 0xC0) - 1; //0-255
     }
 
-    public SqueakObject classGetName() 
-    {
-        return this.getPointerNI(Squeak.Class_name); 
+    public SqueakObject classGetName() {
+        return this.getPointerNI(Squeak.CLASS_NAME); 
     }
     
-    SqueakObject cloneIn(SqueakImage img) 
-    {
+    public SqueakObject cloneIn(SqueakImage img) {
         //Need to get new hash, OT entry...
         SqueakObject clone= new SqueakObject(img);
         clone.copyStateFrom(this);
         return clone; 
     }
     
-    private void copyStateFrom(SqueakObject other) 
-    {
+    private void copyStateFrom(SqueakObject other) {
         sqClass= other.sqClass;
         format= other.format;
         pointers= (Object[])other.pointers.clone();
-        Object otherBits= other.bits;
+        Object otherBits= other.imageData;
         if (otherBits==null)
             return;
         if (otherBits instanceof byte[])
-            bits= ((byte[])other.bits).clone();
+            imageData= ((byte[])other.imageData).clone();
         else if (otherBits instanceof int[])
-            bits= ((int[])other.bits).clone(); 
+            imageData= ((int[])other.imageData).clone(); 
     }
         
-    double getFloatBits()  // isn't this slow?'
-    {
-        return ((Double)bits).doubleValue(); 
+    public double getFloatBits() { // isn't this slow?'
+        return ((Double)imageData).doubleValue(); 
     }
     
-    void setFloatBits(double value) 
-    {
-        bits= new Double(value); 
+    public void setFloatBits(double value) {
+        imageData= new Double(value); 
     }
     
     //CompiledMethods
-    public int methodHeader() 
-    {
+    public int methodHeader() {
         return ((Integer)getPointer(0)).intValue(); 
     }
     
-    public int methodNumLits() 
-    {
+    public int methodNumLits() {
         return (methodHeader()>>9)&0xFF; 
     }
     
-    public int methodNumArgs() 
-    {
+    public int methodNumArgs() {
         return (methodHeader()>>24)&0xF; 
     }
     
-    public int methodPrimitiveIndex() 
-    {
+    public int methodPrimitiveIndex() {
         int primBits= (methodHeader())&0x300001FF;
         if (primBits > 0x1FF)
             return (primBits & 0x1FF) + (primBits >> 19);
@@ -229,89 +244,88 @@ public class SqueakObject //Later make variants for common formats
             return primBits; 
     }
     
-    public SqueakObject methodClassForSuper() //assn found in last literal
-    {
+    public SqueakObject methodClassForSuper() { //assn found in last literal
         SqueakObject assn= getPointerNI(methodNumLits());
         return assn.getPointerNI(Squeak.Assn_value); 
     }
     
-    public boolean methodNeedsLargeFrame() 
-    {
+    public boolean methodNeedsLargeFrame() {
         return (methodHeader() & 0x20000) > 0; 
     }
 
-    public void methodAddPointers(Object[] headerAndLits) 
-    {
+    public void methodAddPointers(Object[] headerAndLits) {
         pointers= headerAndLits; 
     }
     
-    public int methodTempCount() 
-    {
+    public int methodTempCount() {
         return (methodHeader()>>18) & 63; 
     }
     
-    public Object methodGetLiteral(int zeroBasedIndex) 
-    {
+    public Object methodGetLiteral(int zeroBasedIndex) {
         return getPointer(1+zeroBasedIndex);  // step over header
     }
     
     
-    public SqueakObject methodGetSelector(int zeroBasedIndex) 
-    {
+    public SqueakObject methodGetSelector(int zeroBasedIndex) {
         return getPointerNI(1+zeroBasedIndex); // step over header
     }
     
-    public void methodSetLiteral(int zeroBasedIndex, Object rawValue) 
-    {
+    public void methodSetLiteral(int zeroBasedIndex, Object rawValue) {
         setPointer(1+zeroBasedIndex, rawValue); // step over header
     }
+
+    
+    
+    
+    
+    
     
     //Methods below here are only used for reading the Squeak image format
-    public void install(Hashtable oopMap, Integer[] ccArray, SqueakObject floatClass) 
-    {
+    
+    
+    public void install(Hashtable oopMap, Integer[] ccArray, SqueakObject floatClass) {
         //Install this object by decoding format, and rectifying pointers
         int ccInt= ((Integer)sqClass).intValue();
         if ((ccInt>0) && (ccInt<32))
             sqClass= oopMap.get(ccArray[ccInt-1]);
         else
             sqClass= oopMap.get(sqClass);
-        int nWords= ((int[]) bits).length;
+        int nWords= ((int[]) imageData).length;
         if (format<5) 
         {
             //Formats 0...4 -- Pointer fields
-            pointers= decodePointers(nWords,((int[])bits),oopMap);
-            bits= null; 
+            pointers= decodePointers(nWords,((int[])imageData),oopMap);
+            imageData= null; 
         }
         else 
         {
             if (format>=12) 
             {
                 //Formats 12-15 -- CompiledMethods both pointers and bits
-                int methodHeader= ((int[])bits)[0];
+                int methodHeader= ((int[])imageData)[0];
                 int numLits= (methodHeader>>10)&255;
-                pointers= decodePointers(numLits+1,((int[])bits),oopMap); //header+lits
-                bits= decodeBytes(nWords-(numLits+1),((int[])bits),numLits+1,format&3); 
+                pointers= decodePointers(numLits+1,((int[])imageData),oopMap); //header+lits
+                imageData= decodeBytes(nWords-(numLits+1),((int[])imageData),numLits+1,format&3); 
             }
             else if (format>=8) 
             {
                 //Formats 8..11 -- ByteArrays (and Strings)
-                bits= decodeBytes(nWords,((int[])bits),0,format&3); 
+                imageData= decodeBytes(nWords,((int[])imageData),0,format&3); 
             }
             //Format 6 word objects are already OK (except Floats...)
             else if (sqClass==floatClass) 
             {
                 //Floats need two ints to be converted to double
-                long longBits= (((long)((int[])bits)[0])<<32) | (((long)((int[])bits)[0])&0xFFFFFFFF);
+                long longBits= (((long)((int[])imageData)[0])<<32) | (((long)((int[])imageData)[0])&0xFFFFFFFF);
                 //System.err.println();
                 //System.err.println(((int[])bits)[0] + " " + ((int[])bits)[1] + " -> " + longBits);
-                bits= new Double(Double.longBitsToDouble(longBits)); 
+                imageData= new Double(Double.longBitsToDouble(longBits)); 
             }
             //System.err.println((Double)bits + " " + Double.doubleToRawLongBits(((Double)bits).doubleValue()));
         }
     }
 
-    private Object[] decodePointers(int nWords,int[]theBits,Hashtable oopMap) 
-    {
+    private Object[] decodePointers(int nWords,int[]theBits,Hashtable oopMap) {
         //Convert small ints and look up object pointers in oopMap
         Object[] ptrs= new Object[nWords];
         for (int i=0; i<nWords; i++) 
@@ -325,15 +339,13 @@ public class SqueakObject //Later make variants for common formats
         return ptrs; 
     }
 
-    private byte[] decodeBytes(int nWords,int[]theBits,int wordOffset,int fmtLoBits) 
-    {
+    private byte[] decodeBytes(int nWords,int[]theBits,int wordOffset,int fmtLoBits) {
         //Adjust size for low bits and extract bytes from ints
         int nBytes= (nWords*4) - (format&3);
         byte[]newBits= new byte[nBytes];
         int wordIx= wordOffset;
         int fourBytes= 0;
-        for (int i=0; i<nBytes; i++) 
-        {
+        for (int i=0; i<nBytes; i++) {
             if ((i&3)==0)
                 fourBytes= theBits[wordIx++];
             int pickByte= (fourBytes>>(8*(3-(i&3))))&255;
@@ -344,23 +356,18 @@ public class SqueakObject //Later make variants for common formats
         return newBits; 
     }
 
-    public int oldOopAt(int zeroBasedOffset) 
-    {
-        return ((int[]) bits)[zeroBasedOffset]; 
+    public int oldOopAt(int zeroBasedOffset) {
+        return ((int[]) imageData)[zeroBasedOffset]; 
     }
     
-    public String asString() 
-    {
+    public String asString() {
         // debugging only: if body consists of bytes, make a Java String from them
-        if (bits != null && bits instanceof byte[]) 
-        {
+        if (imageData != null && imageData instanceof byte[]) {
             if (pointers != null) 
                 return "a CompiledMethod";
             else 
-                return new String((byte[])bits); 
-        }
-        else 
-        {
+                return new String((byte[])imageData); 
+        } else {
             SqueakObject itsClass= this.getSqClass();
             if (itsClass.pointersSize() >= 9)
                 return "a " + itsClass.classGetName().asString();
@@ -369,17 +376,15 @@ public class SqueakObject //Later make variants for common formats
         }
     }
     
-    public String toString() 
-    {
+    public String toString() {
         return this.asString(); 
     }
     
     /**
      * FIXME: what is the right way to achieve this?
      */
-    void setByte( int zeroBasedIndex, byte value )
-    {
-        byte[] bytes = (byte[]) bits;
+    void setByte( int zeroBasedIndex, byte value ) {
+        byte[] bytes = (byte[]) imageData;
         
         bytes[ zeroBasedIndex ] = value;
     }
@@ -387,9 +392,8 @@ public class SqueakObject //Later make variants for common formats
     /**
      * FIXME: what is the right way to achieve this?
      */
-    byte getByte( int zeroBasedIndex )
-    {
-        byte[] bytes = (byte[]) bits;
+    byte getByte( int zeroBasedIndex ) {
+        byte[] bytes = (byte[]) imageData;
         
         return bytes[ zeroBasedIndex ];
     }
