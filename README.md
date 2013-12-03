@@ -11,8 +11,24 @@ JSqueak was released under the MIT license (see the announcement[1]).
 Any original code released on this repository is also released under
 the MIT license.
 
-This repository is maintained by Jan Tomsa (tomy@tomsovi.com)
+This repository is maintained by Giovanni Giorgi (jj@gioorgi.com) 
+
 Forked from repo of Victor Rodriguez (victorr@gmail.com)
+and merged with work from Jan Tomsa (tomy@tomsovi.com) 
+
+BUG FIXES
+----------
++ SqueakImage: Removed usage of System.gc which is bad for new JVM
++ TODO Added JDK logging framework to track down stuff. Removed System.{out,err} to uniform this use
++ TODO Better launch help
++ Created "etc/" directory with some launch configurations
+
+
+Notes
+-----
+Based on a Squeaj 2.2 mini image (2.2 is of Sep-1998)
+
+
 
 Purpose of this repository: to understand Squeak, to understand JSqueak, hopefully enhance JSqueak.
 

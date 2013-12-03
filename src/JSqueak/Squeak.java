@@ -27,16 +27,16 @@ package JSqueak;
  * @author Dan Ingalls
  *
  */
-public interface Squeak 
+public interface Squeak
 {
-    
+
     // Squeak Headers
     public final static int HEADER_TYPE_MASK= 3;
     public final static int HEADER_TYPE_SIZE_AND_CLASS= 0; //3-word header
     public final static int HEADER_TYPE_CLASS= 1;          //2-word header
     public final static int HEADER_TYPE_FREE_BLOCK= 2;     //free block
     public final static int HEADER_TYPE_SHORT= 3;          //1-word header
-    
+
     //Indices into SpecialObjects array
     public final static int splOb_NilObject= 0;
     public final static int splOb_FalseObject= 1;
@@ -84,14 +84,14 @@ public interface Squeak
     public final static int splOb_ClassExternalFunction= 46;
     public final static int splOb_ClassExternalLibrary= 47;
     public final static int splOb_SelectorAboutToReturn= 48;
-    
-    
+
+
     // Class layout:
     public final static int CLASS_SUPERCLASS= 0;
     public final static int CLASS_MDICT= 1;
     public final static int CLASS_FORMAT= 2;
     public final static int CLASS_NAME= 6;
-    
+
     // Context layout
     public final static int CONTEXT_SENDER= 0;
     public final static int CONTEXT_INSTRUCTION_POINTER= 1;
@@ -128,7 +128,7 @@ public interface Squeak
     //Class Process"
     public final static int Proc_suspendedContext= 1;
     public final static int Proc_priority= 2;
-    public final static int Proc_myList= 3; 
+    public final static int Proc_myList= 3;
 
     // Association layout:
     public final static int Assn_key= 0;
@@ -178,5 +178,9 @@ public interface Squeak
     public final static int Form_width= 1;
     public final static int Form_height= 2;
     public final static int Form_depth= 3;
+
+    // WINDOW LAYOUT:
+    public static final int DEFAULT_WIDTH =  800;  // Orig was 640
+    public static final int DEFAULT_HEIGHT = 600; //   Orig was 480
 
 }

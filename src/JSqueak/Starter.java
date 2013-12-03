@@ -26,56 +26,58 @@ package JSqueak;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 
-import JSqueak.display.Screen;
 import JSqueak.display.ScreenFactory;
 import JSqueak.display.impl.ScreenFactoryImpl;
 import JSqueak.image.SqueakImage;
 import JSqueak.io.KeyboardFactory;
 import JSqueak.monitor.Monitor;
-import JSqueak.monitor.MonitorFrame;
+import JSqueak.monitor.TextOnlyMonitor;
 import JSqueak.io.impl.KeyboardFactoryImpl;
 import JSqueak.vm.SqueakVM;
 
 public class Starter {
     private static final String MINI_IMAGE_FILE_NAME = "mini.image.gz";
     private static Monitor monitor = null;
-    
+
     private static SqueakImage locateStartableImageAndLoadIt() throws IOException {
         URL imageUrl = Starter.class.getResource( MINI_IMAGE_FILE_NAME );
-        if ( "file".equals( imageUrl.getProtocol() ) )
-            return new SqueakImage( new File( imageUrl.getPath() ), monitor );
-            
-        InputStream ims = Starter.class.getResourceAsStream( MINI_IMAGE_FILE_NAME );
-        if ( ims != null )
-            return new SqueakImage(ims, monitor);
-        
+        if ( "file".equals( imageUrl.getProtocol() ) ) {
+			return new SqueakImage( new File( imageUrl.getPath() ), monitor );
+		}
+
+//        InputStream ims = Starter.class.get.getResourceAsStream( MINI_IMAGE_FILE_NAME );
+//        if ( ims != null ) {
+//			return new SqueakImage(ims, monitor);
+//		}
+
         throw new FileNotFoundException( "Cannot locate resource " + MINI_IMAGE_FILE_NAME );
     }
 
     private static SqueakImage locateSavedImageAndLoadIt( String pathname ) throws IOException {
         File saved = new File( pathname );
-        if ( saved.exists() )
-            return new SqueakImage( saved, monitor );
-        
+        if ( saved.exists() ) {
+			return new SqueakImage( saved, monitor );
+		}
+
         throw new FileNotFoundException( "Cannot locate image " + pathname );
     }
-    
+
     /**
      * @param args first arg may specify image file name
      */
     public static void main(String[] args) throws IOException, NullPointerException, java.lang.ArrayIndexOutOfBoundsException {
-        monitor = new MonitorFrame();
-        //SqueakVM.initSmallIntegerCache();
+        //monitor = new MonitorFrame();
+    	monitor= new TextOnlyMonitor();
+        // GG:?? SqueakVM.initSmallIntegerCache();
         SqueakImage img = args.length > 0 ? locateSavedImageAndLoadIt( args[0] )
                                           : locateStartableImageAndLoadIt();
         ScreenFactory screenFactory = new ScreenFactoryImpl();
 		//monitorFrame.logMessage(MINI_IMAGE_FILE_NAME);
-        KeyboardFactory keyboardFactory = new KeyboardFactoryImpl();		
+        KeyboardFactory keyboardFactory = new KeyboardFactoryImpl();
         SqueakVM vm= new SqueakVM(img,monitor, screenFactory, keyboardFactory);
-        vm.run(); 
+        vm.run();
     }
 
 }

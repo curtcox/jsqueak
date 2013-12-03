@@ -57,10 +57,10 @@ import JSqueak.vm.SqueakVM;
  * as this matters for Squeak weak objects, should we ever support them.
  */
 
-public class SqueakImage 
+public class SqueakImage
 {
     private final String DEFAULT_IMAGE_NAME = "jsqueak.image";
-    
+
     SqueakImageHeader imageHeader;
     private SqueakVM vm;
     private WeakReference[] objectTable;
@@ -68,30 +68,30 @@ public class SqueakImage
     private int otMaxOld;
     //private int lastHash;
     private int lastOTindex;
-    
+
     private File imageFile;
-    
+
     // FIXME: Access this through a method
     private SqueakObject specialObjectsArray;
 
-	private Monitor monitor;
-    
-    public SqueakImage(InputStream raw, Monitor monitor ) throws IOException 
-    {
-    	this.monitor = monitor;
-        imageFile = new File( System.getProperty( "user.dir" ),
-                              DEFAULT_IMAGE_NAME );
-        loadImage(raw); 
-    }
-    
-    public SqueakImage( File fn, Monitor monitor ) throws IOException 
+	private final Monitor monitor;
+
+//    public SqueakImage(InputStream raw, Monitor monitor ) throws IOException
+//    {
+//    	this.monitor = monitor;
+//        imageFile = new File( System.getProperty( "user.dir" ),
+//                              DEFAULT_IMAGE_NAME );
+//        loadImage(raw);
+//    }
+
+    public SqueakImage( File fn, Monitor monitor ) throws IOException
     {
     	this.monitor = monitor;
         imageFile = fn;
-        loadImage(fn); 
+        loadImage(fn);
     }
-    
-    public void save(File fn) throws IOException 
+
+    public void save(File fn) throws IOException
     {
         BufferedOutputStream fp= new BufferedOutputStream(new FileOutputStream(fn));
         GZIPOutputStream gz= new GZIPOutputStream(fp);
@@ -106,27 +106,36 @@ public class SqueakImage
     {
         return imageFile;
     }
-    
-    public void bindVM(SqueakVM theVM) 
+
+    public void bindVM(SqueakVM theVM)
     {
-        vm = theVM; 
-    }
-    
-    private void loadImage(InputStream raw) throws IOException 
-    {
-        BufferedInputStream inputStream= new BufferedInputStream(raw);
-        GZIPInputStream gzippedInputStream= new GZIPInputStream(inputStream);
-        DataInputStream dataInputStream= new DataInputStream(gzippedInputStream);
-        readImage(dataInputStream); 
+        vm = theVM;
     }
 
-    private void loadImage(File fn) throws IOException 
+    private void loadImage(InputStream raw,boolean gzip) throws IOException
+    {
+    	DataInputStream dataInputStream;
+        BufferedInputStream inputStream= new BufferedInputStream(raw);
+
+        if(gzip){
+
+	        GZIPInputStream gzippedInputStream= new GZIPInputStream(inputStream);
+	        dataInputStream= new DataInputStream(gzippedInputStream);
+        }else{
+        	// Not in GZIP format?
+        	dataInputStream= new DataInputStream(inputStream);
+        }
+        readImage(dataInputStream);
+    }
+
+    private void loadImage(File fn) throws IOException
     {
         FileInputStream unbuffered= new FileInputStream(fn);
-        loadImage(unbuffered);
-        unbuffered.close(); 
+
+        loadImage(unbuffered,fn.getName().endsWith(".gz"));
+        unbuffered.close();
     }
-    
+
     public void bulkMutate(Object[] sourceObjects, Object[] targetClasses) {
     	ObjectMutator.verifySameLengths(sourceObjects, targetClasses);
     	int length = sourceObjects.length;
@@ -146,14 +155,14 @@ public class SqueakImage
 
 
     //Enumeration...
-    public SqueakObject nextInstance(int startingIndex, SqueakObject sqClass) 
+    public SqueakObject nextInstance(int startingIndex, SqueakObject sqClass)
     {
         //if sqClass is null, then find next object, else find next instance of sqClass
-        for(int i=startingIndex; i<=otMaxUsed; i++) 
+        for(int i=startingIndex; i<=otMaxUsed; i++)
         {
             // For every object...
             SqueakObject obj= (SqueakObject)objectTable[i].get();
-            if (obj != null && (sqClass==null | obj.getSqClass() == sqClass)) 
+            if (obj != null && (sqClass==null | obj.getSqClass() == sqClass))
             {
                 lastOTindex= i; // save hint for next scan
                 return obj;
@@ -161,93 +170,109 @@ public class SqueakImage
         }
         return vm.nilObj;  // Return nil if none found
     }
-    
-    public int otIndexOfObject(SqueakObject lastObj) 
+
+    public int otIndexOfObject(SqueakObject lastObj)
     {
         // hint: lastObj should be at lastOTindex
-        SqueakObject obj= (SqueakObject)objectTable[lastOTindex].get(); 
-        if (lastOTindex<=otMaxUsed && obj==lastObj) 
+        SqueakObject obj= (SqueakObject)objectTable[lastOTindex].get();
+        if (lastOTindex<=otMaxUsed && obj==lastObj)
         {
             return lastOTindex;
         }
-        else 
+        else
         {
-            for(int i=0; i<=otMaxUsed; i++) 
+            for(int i=0; i<=otMaxUsed; i++)
             {
                 // Alas no; have to find it again...
                 obj= (SqueakObject)objectTable[i].get();
-                if (obj == lastObj) 
-                    return i; 
+                if (obj == lastObj) {
+					return i;
+				}
             }
         }
         return -1;  //should not happen
     }
-    
-    private final static int OT_MIN_SIZE=  500000;
-    private final static int OT_MAX_SIZE= 1600000;
-    private final static int OT_GROW_SIZE= 10000;
 
-    public short registerObject (SqueakObject obj) 
+    private final static int OT_MIN_SIZE=  2740000; // was  500000;
+    // GG: Fine tuned original values
+    private final static int OT_MAX_SIZE= Integer.MAX_VALUE-2; // 1600000 * 10 *10 ;
+    // Big push to avoid too much call...
+    private final static int OT_GROW_SIZE= 10000  * 8;
+
+    public short registerObject (SqueakObject obj)
     {
         //All enumerable objects must be registered
-        if ((otMaxUsed+1) >= objectTable.length)
-            if (!getMoreOops(OT_GROW_SIZE))
-                throw new RuntimeException("Object table has reached capacity");
+        if ((otMaxUsed+1) >= objectTable.length) {
+			if (!getMoreOops(OT_GROW_SIZE)) {
+				throw new RuntimeException("Object table has reached capacity");
+			}
+		}
         objectTable[++otMaxUsed]= new WeakReference(obj);
         imageHeader.lastHash= 13849 + (27181 * imageHeader.lastHash);
-        return (short) (imageHeader.lastHash & 0xFFF); 
+        return (short) (imageHeader.lastHash & 0xFFF);
     }
-    
-    private boolean getMoreOops(int request) 
+
+    private boolean getMoreOops(int request)
     {
         int nullCount;
         int startingOtMaxUsed= otMaxUsed;
-        for(int i=0; i<5; i++) 
+        for(int i=0; i<5; i++)
         {
-            if (i==2) 
-                vm.clearCaches(); //only flush caches after two tries
+            if (i==2)
+			 {
+				vm.clearCaches(); //only flush caches after two tries
+			}
             partialGC();
             nullCount= startingOtMaxUsed - otMaxUsed;
-            if (nullCount >= request)
-                return true; 
+            if (nullCount >= request) {
+				return true;
+			}
         }
-        
+
         // Sigh -- really need more space...
         int n= objectTable.length;
-        if (n+request > OT_MAX_SIZE) 
+        if (n+request > OT_MAX_SIZE)
         {
+        	System.err.println("Really need a GC...");
             fullGC();
-            return false; 
+            return false;
         }
         System.out.println("Squeak: growing to " + (n+request) + " objects...");
         WeakReference newTable[]= new WeakReference[n+request];
         System.arraycopy(objectTable, 0, newTable, 0, n);
         objectTable= newTable;
-        return true; 
+        return true;
     }
-    
-    public int partialGC() 
+
+    public int partialGC()
     {
-        System.gc();
+    	// GG NEVER NEVER NEVER CALL System.gc on new Java JVM.
+    	// Let the Duke do it for you
+        // System.gc();
         otMaxUsed=reclaimNullOTSlots(otMaxOld);
-        return spaceLeft(); 
+        return spaceLeft();
     }
 
-    public int spaceLeft() 
+    public int spaceLeft()
     {
-        return (int)Math.min(Runtime.getRuntime().freeMemory(),(long)SqueakVM.MAX_SMALL_INT); 
+        return (int)Math.min(Runtime.getRuntime().freeMemory(),SqueakVM.MAX_SMALL_INT);
     }
 
-    public int fullGC() 
+    public int fullGC()
     {
+    	monitor.logMessage("...Full GC...");
         vm.clearCaches();
-        for(int i=0; i<5; i++) partialGC();
+        for(int i=0; i<5; i++) {
+			partialGC();
+		}
         otMaxUsed=reclaimNullOTSlots(0);
         otMaxOld= Math.min(otMaxOld,otMaxUsed);
-        return spaceLeft(); 
+        int sl=spaceLeft();
+        monitor.logMessage("...Full GC...Space Left:"+sl);
+        return sl;
     }
 
-    private int reclaimNullOTSlots(int start) 
+    private int reclaimNullOTSlots(int start)
     {
         // Java GC will null out slots in the weak Object Table.
         // This procedure compacts the occupied slots (retaining order),
@@ -256,79 +281,82 @@ public class SqueakImage
         // if start=otMaxOld it will skip the old objects (like gcMost).
         int oldOtMaxUsed= otMaxUsed;
         int writePtr= start;
-        for(int readPtr= start; readPtr<=otMaxUsed; readPtr++)
-            if (objectTable[readPtr].get() != null)
-                objectTable[writePtr++]=objectTable[readPtr];
-        if (writePtr==start) 
-            return oldOtMaxUsed;
-        return writePtr-1; 
+        for(int readPtr= start; readPtr<=otMaxUsed; readPtr++) {
+			if (objectTable[readPtr].get() != null) {
+				objectTable[writePtr++]=objectTable[readPtr];
+			}
+		}
+        if (writePtr==start) {
+			return oldOtMaxUsed;
+		}
+        return writePtr-1;
     }
-    
-    private void writeImage (DataOutput ser) throws IOException 
+
+    private void writeImage (DataOutput ser) throws IOException
     {
         // Later...
         throw new IOException( "Image saving is not implemented yet" );
-    } 
-    
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////
-    
-    private void readImage(DataInput in) throws IOException 
+
+    private void readImage(DataInput in) throws IOException
     {
-        System.out.println("Start reading at " + System.currentTimeMillis());
+        //System.out.println("Start reading at " + System.currentTimeMillis());
         monitor.logMessage("Start reading image at " + System.currentTimeMillis());
-        monitor.setStatus("Reading image");
-        
+        monitor.fine("Reading image");
+
         objectTable = new WeakReference[OT_MIN_SIZE];
         otMaxUsed= -1;
-        
+
         SqueakImageReader reader = new SqueakImageReader(in);
-        
+
         // Read image header
         imageHeader = reader.readImageHeader();
-        
-        // Read objects 
+
+        // Read objects
         Hashtable<Integer, SqueakObject> oopMap = reader.readObjects(this);
-        
+
         //Temp version of special objects needed for makeCompactClassesArray; not a good object yet
         SqueakObject specialObjectsArrayOop = oopMap.get(Integer.valueOf(imageHeader.specialObjectsOopInt));
         int[] soaByteCode = (int[]) specialObjectsArrayOop.getBits();
         String soaByteCodeHex = HexUtils.translateRawData(soaByteCode);
         monitor.logMessage("Special objects bytecode: " + soaByteCodeHex);
         setSpecialObjectsArray(specialObjectsArrayOop);
-        
+
         Integer[] ccArray= makeCompactClassesArray(oopMap,getSpecialObjectsArray());
-        
+
         int oldOop= getSpecialObjectsArray().oldOopAt(Squeak.splOb_ClassFloat);
         SqueakObject floatClass= oopMap.get(Integer.valueOf(oldOop));
-        
-        monitor.setStatus("Installing");
-        System.out.println("Start installs at " + System.currentTimeMillis());
+
+        monitor.fine("Installing");
+        //System.out.println("Start installs at " + System.currentTimeMillis());
         monitor.logMessage("Start installs at " + System.currentTimeMillis());
-        
+
         for (int i= 0; i<otMaxUsed; i++) {
         	SqueakObject squeakObject = (SqueakObject) objectTable[i].get();
-        	monitor.logMessage("Installing: "+squeakObject.getHash());
-        	squeakObject.install(oopMap,ccArray,floatClass); 
+        	monitor.finest("Installing: "+squeakObject.getHash());
+        	squeakObject.install(oopMap,ccArray,floatClass);
         }
-        
-        System.out.println("Done installing at " + System.currentTimeMillis());
+
+        //System.out.println("Done installing at " + System.currentTimeMillis());
         monitor.logMessage("Done installing at " + System.currentTimeMillis());
-        
+
         //Proper version of special objects -- it's a good object
         setSpecialObjectsArray(oopMap.get(Integer.valueOf(imageHeader.specialObjectsOopInt)));
-        otMaxOld= otMaxUsed; 
+        otMaxOld= otMaxUsed;
     }
 
-    private Integer[] makeCompactClassesArray(Hashtable<Integer, SqueakObject> oopMap, SqueakObject splObs) 
+    private Integer[] makeCompactClassesArray(Hashtable<Integer, SqueakObject> oopMap, SqueakObject splObs)
     {
         //Makes an array of the compact classes as oldOops (still need to be mapped)
         int oldOop= splObs.oldOopAt(Squeak.splOb_CompactClasses);
         SqueakObject compactClassesArray= oopMap.get(new Integer(oldOop));
         Integer[] ccArray= new Integer[31];
         for (int i= 0; i<31; i++) {
-            ccArray[i]= Integer.valueOf(compactClassesArray.oldOopAt(i)); 
+            ccArray[i]= Integer.valueOf(compactClassesArray.oldOopAt(i));
         }
-        return ccArray; 
+        return ccArray;
     }
 
 	public SqueakObject getSpecialObjectsArray() {

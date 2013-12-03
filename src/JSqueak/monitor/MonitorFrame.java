@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -14,9 +15,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 public class MonitorFrame extends JFrame implements Monitor {
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 	JLabel lbStatus;
 	JTextArea taLog;
 	JButton btDoSomething;
+	Logger logger=Logger.getLogger("jsqueak.main");
 
 	public MonitorFrame() throws HeadlessException {
 		lbStatus = new JLabel("--current status--");
@@ -48,9 +54,9 @@ public class MonitorFrame extends JFrame implements Monitor {
 	    if ("do_something".equals(e.getActionCommand())) {
 	        this.logMessage("Oops! I did it.");
 	    }
-	} 
+	}
 
-	
+
 	public MonitorFrame(GraphicsConfiguration gc) {
 		super(gc);
 	}
@@ -66,11 +72,29 @@ public class MonitorFrame extends JFrame implements Monitor {
 	@Override
 	public void logMessage(String message) {
 		taLog.append(message+"\n");
+		logger.info(message);
+		//System.err.println("LOG:"+message);
+	}
+
+//	@Override
+//	public void setStatus(String status) {
+//		lbStatus.setText(status);
+//	}
+
+	@Override
+	public void fine(String debugMessage) {
+		logger.fine(debugMessage);
+
 	}
 
 	@Override
-	public void setStatus(String status) {
-		lbStatus.setText(status);
+	public void finer(String debugMessage) {
+		logger.finer(debugMessage);
+	}
+
+	@Override
+	public void finest(String debugMessage) {
+		logger.finest(debugMessage);
 	}
 
 }

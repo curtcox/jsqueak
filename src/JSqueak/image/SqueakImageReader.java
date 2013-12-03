@@ -10,7 +10,7 @@ import JSqueak.vm.SqueakObject;
 class SqueakImageReader {
 	SqueakImageHeader imageHeader = null;
 	DataInput in = null;
-	
+
 	public SqueakImageReader(DataInput in) {
 		this.in = in;
 	}
@@ -33,39 +33,41 @@ class SqueakImageReader {
 
 	private boolean determineEndianness() throws IOException {
 		int version= in.readInt();
-        if (version != 6502) 
+        if (version != 6502)
         {
             version= swapInt(version);
-            if (version != 6502)
-                throw new IOException("bad image version");
-            return true; 
+            if (version != 6502) {
+				throw new IOException("bad image version:"+version);
+			}
+            return true;
         }
 		return false;
 	}
-    
-    private int intFromInputSwapped() throws IOException 
+
+    private int intFromInputSwapped() throws IOException
     {
         // Return an int from stream 'in', swizzled if doSwap is true
-        if (imageHeader.doSwap) 
-            return swapInt(in.readInt());
-        else 
-            return in.readInt(); 
+        if (imageHeader.doSwap) {
+			return swapInt(in.readInt());
+		} else {
+			return in.readInt();
+		}
     }
-    
-    private int swapInt(int toSwap) 
+
+    private int swapInt(int toSwap)
     {
         // Return an int with byte order reversed
         int incoming= toSwap;
         int outgoing= 0;
-        for (int i= 0; i<4; i++) 
+        for (int i= 0; i<4; i++)
         {
             int lowByte= incoming & 255;
             outgoing= (outgoing<<8) + lowByte;
-            incoming= incoming>>8; 
+            incoming= incoming>>8;
         }
-        return outgoing; 
+        return outgoing;
     }
-        
+
 	public Hashtable<Integer,SqueakObject> readObjects(SqueakImage objectRegistry) throws IOException {
         Hashtable<Integer, SqueakObject> oopMap= new Hashtable<Integer, SqueakObject>(30000);
 		for (int i= 0; i<imageHeader.endOfMemory;) {
@@ -99,7 +101,7 @@ class SqueakImageReader {
             dataLength--;  //length includes base header which we have already read
             int format= ((objectHeader>>8) & 15);
             int hash= ((objectHeader>>17) & 4095);
-            
+
             // Note classInt and data are just raw data; no base addr adjustment and no Int conversion
             data= new int[dataLength];
             for (int j= 0; j<dataLength; j++) {
@@ -108,12 +110,12 @@ class SqueakImageReader {
             //String rawDataChunk = HexUtils.translateRawData(data);
             //monitor.logMessage(rawDataChunk);
             i += dataLength*4;
-            
+
             SqueakObject squeakObject= new SqueakObject(Integer.valueOf(classInt),(short)format,(short)hash,data);
             objectRegistry.registerObject(squeakObject);
             //oopMap is from old oops to new objects
             //Why can't we use ints as keys??...
-            oopMap.put(Integer.valueOf(baseAddr+imageHeader.oldBaseAddr),squeakObject); 
+            oopMap.put(Integer.valueOf(baseAddr+imageHeader.oldBaseAddr),squeakObject);
         }
 		return oopMap;
 	}
