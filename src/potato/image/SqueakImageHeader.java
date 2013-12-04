@@ -1,8 +1,8 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,15 +25,23 @@ THE SOFTWARE.
 */
 package potato.image;
 
+import java.io.Serializable;
+
 /**
  * @author Daniel Ingalls
- * 
+ *
  * @author Frank Feinbube
  * @author Robert Wierschke
  */
-public class SqueakImageHeader {
+public class SqueakImageHeader implements Serializable{
 
-    int version;
+    /**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
+
+	int version;
     int headerSize;
     int endOfMemory; //first unused location in heap
     int oldBaseAddr; //object memory base address of image

@@ -1,8 +1,8 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,6 +31,7 @@ The Smalltalk code is still annotated as comments.
 
 package potato.objects;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import potato.*;
 import potato.image.SqueakObjectHeader;
@@ -39,7 +40,7 @@ import java.util.*;
 
 /**
  * @author Daniel Ingalls
- * 
+ *
  * @author Frank Feinbube
  * @author Robert Wierschke
  *
@@ -48,12 +49,18 @@ import java.util.*;
  * now it is simple, and handles the inhomogeneous case of CompiledMethods nicely.
  *
  * Weak fields are not currently supported.  The plan for doing this would be
- * to make those objects a subclass, and put pointers in a WeakField.  We would 
+ * to make those objects a subclass, and put pointers in a WeakField.  We would
  * need to replace all patterns of obj.pointers with an access function.
  * Then we would associate a finalization routine with those pointers.
  */
-public class SqueakObject {//Later make variants for common formats
-    public short hash;        //12-bit Squeak hash
+public class SqueakObject implements Serializable
+{//Later make variants for common formats
+    /**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public short hash;        //12-bit Squeak hash
     public short format;      // 4-bit Squeak format
     public int size = 0;
     public int baseAddr = 0;
@@ -61,7 +68,14 @@ public class SqueakObject {//Later make variants for common formats
     public Object bits;       //indexable binary data (bytes or ints)
     private boolean fixByteOrder;
     private SqueakObjectHeader header;
-    
+
+    /** Needed by XMLSerializer
+     *
+     */
+    public SqueakObject(){
+
+    }
+
     public SqueakObject(SqueakObjectHeader header, int objectOffset, int[] content, boolean fixByteOrder) {
         this.format = header.format;
         this.hash = header.hash;
@@ -73,10 +87,10 @@ public class SqueakObject {//Later make variants for common formats
         this.header = header;
         this.fixByteOrder = fixByteOrder;
     }
-    
+
     public Object[] pointers; //pointer fields; fixed as well as indexable
     // for Large****tiveInteger instances, pointers[0] holds the BigInteger rep
- 
+
     SqueakObject(SqueakImage img) {
         //Creation of stub object (no pointers or bits)
         hash = img.registerObject(this);
@@ -191,7 +205,7 @@ public class SqueakObject {//Later make variants for common formats
     private void copyStateFrom(SqueakObject other) {
         sqClass = other.sqClass;
         format = other.format;
-        pointers = (Object[]) other.pointers.clone();
+        pointers = other.pointers.clone();
         Object otherBits = other.bits;
         if (otherBits == null) {
             return;
@@ -324,8 +338,9 @@ public class SqueakObject {//Later make variants for common formats
             for (int i = 0; i < nBytes; i++) {
                 if ((i & 3) == 0) {
                     fourBytes = theBits[wordIx++];
-                    if (fixByteOrder)
-                        fourBytes = Integer.reverseBytes(fourBytes);
+                    if (fixByteOrder) {
+						fourBytes = Integer.reverseBytes(fourBytes);
+					}
                 }
 
                 int pickByte = (fourBytes >> (8 * (3 - (i & 3)))) & 255;
@@ -340,47 +355,47 @@ public class SqueakObject {//Later make variants for common formats
     public int oldOopAt(int zeroBasedOffset) {
         return ((int[]) bits)[zeroBasedOffset];
     }
-    
-    
+
+
         /*
     isWords: oop
 	^oop class isPointers not and:[oop class isBytes not]
-     */ 
+     */
     public boolean isWords() {
         return !isPointers() && !((SqueakObject)this.sqClass).isBytes(); // ^oop class isPointers not and:[oop class isBytes not]
     }
-    
+
     /*
     isPointers
 	^ self isBits not
-     */ 
+     */
     public boolean isPointers() {
         return !isBits(); // ^ self isBits not
     }
-    
+
     /*
     isBits
 	^ self instSpec >= 6
-     */ 
+     */
     boolean isBits(){
         return format >= 6; // ^ self instSpec >= 6
     }
-    
+
     /*
     isBytes
 	^ self instSpec >= 8
-     */ 
+     */
     boolean isBytes(){
         return format >= 8; // ^ self instSpec >= 8
     }
-    
+
     /*
     byteSizeOf: oop
 	"Return the size of the receiver in bytes"
 	^oop class isBytes
 		ifTrue:[(self slotSizeOf: oop)]
 		ifFalse:[(self slotSizeOf: oop) * 4]
-     */ 
+     */
     public int byteSizeOf() {
         if( ((SqueakObject)sqClass).isBytes() ) { // ^oop class isBytes
             return slotSizeOf(); // ifTrue:[(self slotSizeOf: oop)]
@@ -388,15 +403,15 @@ public class SqueakObject {//Later make variants for common formats
             return slotSizeOf() * 4; // ifFalse:[(self slotSizeOf: oop) * 4]
         }
     }
-    
+
     /*
     isWordsOrBytes: oop
 	^(self isBytes: oop) or:[self isWords: oop]
-     */ 
+     */
     public boolean isWordsOrBytes(){
         return isBytes() || isWords(); // ^(self isBytes: oop) or:[self isWords: oop]
     }
-    
+
     public int slotSizeOf() {
         int result = bitsSize();
         if( result == 0){
@@ -413,11 +428,11 @@ public class SqueakObject {//Later make variants for common formats
 	self inline: true.
 	header := self baseHeader: oop.
 	^ self lengthOf: oop baseHeader: header format: ((header >> 8) bitAnd: 16rF)
-     */ 
+     */
     public int lengthOf(){
         return header.lengthOf();
     }
-    
+
     public String asString() {	// debugging only: if body consists of bytes, make a Java String from them
         if (bits != null && bits instanceof byte[]) {
             if (pointers != null) {
@@ -440,49 +455,49 @@ public class SqueakObject {//Later make variants for common formats
     public String toString() {
         return this.asString();
     }
-    
+
     /**
      * FIXME: what is the right way to achieve this?
      */
     public void setByte( int zeroBasedIndex, byte value )
     {
         byte[] bytes = (byte[]) bits;
-        
+
         bytes[ zeroBasedIndex ] = value;
     }
-    
+
     /**
      * FIXME: what is the right way to achieve this?
      */
     public byte getByte( int zeroBasedIndex )
     {
         byte[] bytes = (byte[]) bits;
-        
+
         return bytes[ zeroBasedIndex ];
     }
-    
+
     /**
      * Check whether this object, which is supposed to be a Large****Integer,
      * already has a BigInteger representation. No security checks are performed.
      * This method is supposed to be called in correct contexts.
-     * 
+     *
      * @return true if this object already holds a BigInteger.
      */
     public boolean hasLarge() {
         return pointers != null && pointers[0] instanceof BigInteger;
     }
-    
+
     /**
      * This method returns this object's BigInteger representation. No security
      * checks are performed to ensure this is a Large****Integer. This method
      * is simply expected to be called in appropriate situations.
-     * 
+     *
      * @return a BigInteger representing this object.
      */
     public BigInteger large() {
         return (BigInteger)pointers[0];
     }
-    
+
     /**
      * Assign the passed BigInteger to this object's pointers array. No security
      * checks are done in this case: this method is simply not supposed to be
@@ -493,7 +508,7 @@ public class SqueakObject {//Later make variants for common formats
     public void assignLarge(BigInteger big) {
         pointers = new Object[] { big };
     }
-    
+
     /**
      * Invalidate the large representation of this object by setting it to null.
      * No security checks are performed to ensure that this object represents a
@@ -503,5 +518,5 @@ public class SqueakObject {//Later make variants for common formats
     public void invalidateLarge() {
         pointers[0] = null;
     }
-    
+
 }

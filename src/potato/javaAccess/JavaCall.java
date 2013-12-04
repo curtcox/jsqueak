@@ -1,5 +1,5 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Frank Feinbube, Robert Wierschke.  All rights reserved.
 
@@ -30,7 +30,7 @@ import potato.objects.SmallInteger;
 import potato.objects.SqueakObject;
 import potato.vm.Stack;
 
-/** 
+/**
  * @author Frank Feinbube
  * @author Robert Wierschke
  */
@@ -39,15 +39,15 @@ public class JavaCall {
     /**
      * The VM stack used to pass argument and result values.
      */
-    private Stack stack;
+    private final Stack stack;
     /**
      * The Java method to be called.
      */
-    private Method method;
+    private final Method method;
     /**
      * The Java (!) parameters uesd for the methdo call.
      */
-    private Object[] params;
+    private final Object[] params;
 
     /**
      * Simple sets the stack to be uses during method operation.
@@ -55,7 +55,7 @@ public class JavaCall {
      */
     public JavaCall(Stack stack, SqueakObject selector) {
         this.stack = stack;
-        
+
         int numberOfParameters = getNumberOfParameters(selector.toString());
         this.params = getParamsFromStack(numberOfParameters);
         this.method = getMethodFromSelectorString(selector.toString());
@@ -68,7 +68,11 @@ public class JavaCall {
      * @return          true if it is a Java call.
      */
     public static boolean isJavaCall(SqueakObject selector, Object newRcvr) {
-        return newRcvr.toString().equals("a UndefinedObject") && selector.toString().startsWith("JAVA");
+    	boolean isJavaCall=newRcvr.toString().equals("a UndefinedObject") && selector.toString().startsWith("JAVA");
+    	if(isJavaCall) {
+    		Logger.getLogger(JavaCall.class.getName()).info("isJavaCall>>" +selector );
+    	}
+        return isJavaCall;
     }
 
     public void invokeAndPushResult() {
@@ -86,7 +90,7 @@ public class JavaCall {
     /**
      * Converts the given Java type into a suitable Squeak type and pushs this
      * on the stack as the result value of the method call.
-     * 
+     *
      * @param result    The result value to be places on the stack.
      */
     private void convertAndPushAsResult(Object result) {
@@ -128,10 +132,11 @@ public class JavaCall {
             Object[] result = new Object[numberOfParams];
             for (int i = 0; i < numberOfParams; i++) {
                 Object param = this.stack.pop();
-                if (param instanceof SqueakObject)
-                    result[i] = param.toString();
-                else
-                    result[i] = param;
+                if (param instanceof SqueakObject) {
+					result[i] = param.toString();
+				} else {
+					result[i] = param;
+				}
             }
             return result;
         }
@@ -142,10 +147,11 @@ public class JavaCall {
         if (this.params != null) {
             result = new Class<?>[this.params.length];
             for (int i = 0; i < this.params.length; i++) {
-                if (this.params[i] instanceof SqueakObject)
-                    result[i] = String.class;   // HACK
-                else
-                    result[i] = this.params[i].getClass();
+                if (this.params[i] instanceof SqueakObject) {
+					result[i] = String.class;   // HACK
+				} else {
+					result[i] = this.params[i].getClass();
+				}
             }
         }
         return result;

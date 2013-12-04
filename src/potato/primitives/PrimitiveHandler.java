@@ -1,8 +1,8 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -52,7 +52,7 @@ import static potato.objects.SpecialObjectConstants.*;
 
 /**
  * @author Daniel Ingalls
- *  
+ *
  * @author Frank Feinbube
  * @author Robert Wierschke
  *
@@ -72,13 +72,14 @@ The Smalltalk code is still annotated as comments.
  */
 
 public class PrimitiveHandler {
+	Logger logger=Logger.getLogger(getClass().getName());
 
-    private Stack stack;
-    private MethodCache methodCache;
-    private InterruptHandler interruptHandler;
-    private ObjectTable objectTable;
-    private VM vm;
-    private SqueakImage image;
+    private final Stack stack;
+    private final MethodCache methodCache;
+    private final InterruptHandler interruptHandler;
+    private final ObjectTable objectTable;
+    private final VM vm;
+    private final SqueakImage image;
     boolean successFlag;
     private Screen theDisplay;
     int[] displayBitmap;
@@ -94,19 +95,19 @@ public class PrimitiveHandler {
     AtCacheInfo[] atCache;
     AtCacheInfo[] atPutCache;
     AtCacheInfo nonCachedInfo;
-    
+
     Stack stack() { return stack; }
-    
+
     //
     // support for externalised primitives
     //
-    
+
     private final FileSystemPrimitives fileSystemPrimitives =
         new FileSystemPrimitives(this);
-    
+
     private final LargeIntegerPrimitives largeIntegerPrimitives =
         new LargeIntegerPrimitives(this);
-    
+
     //
     // support for primitive failure
     //
@@ -122,27 +123,27 @@ public class PrimitiveHandler {
     // informative stack trace. The former, conversely, are created on request
     // and carry a meaningful stack trace.
     //
-    
+
     private static ExpectedPrimitiveFailedException epfe =
         new ExpectedPrimitiveFailedException();
-    
+
     public PrimitiveFailedException failUnexpected()
     {
-        return new UnexpectedPrimitiveFailedException(); 
+        return new UnexpectedPrimitiveFailedException();
     }
-    
+
     public PrimitiveFailedException failUnexpected(Exception cause) {
         return new UnexpectedPrimitiveFailedException(cause);
     }
-    
+
     public PrimitiveFailedException failUnexpected(String cause) {
         return new UnexpectedPrimitiveFailedException(cause);
     }
-    
+
     public static PrimitiveFailedException failExpected() {
         return epfe;
     }
-    
+
     /**
      * FIXME: surely something better can be devised?
      *        Idea: make argCount a field, then this method
@@ -150,9 +151,9 @@ public class PrimitiveHandler {
      */
     Object stackReceiver( int argCount )
     {
-        return vm.stack.stackValue( argCount ); 
+        return vm.stack.stackValue( argCount );
     }
-    
+
     Object pos32BitIntFor( long pos32Val )
     {
         if ( pos32Val < Integer.MIN_VALUE ||
@@ -160,34 +161,35 @@ public class PrimitiveHandler {
         {
             throw failUnexpected(new ArithmeticException("long to int overflow"));
         }
-        
+
         return pos32BitIntFor( (int) pos32Val );
     }
-    
+
     /**
      * Note: this method does not check to see that the passed
      *       object is an instance of Boolean.
-     *       
+     *
      * @return true iff object is the special Squeak true object
      */
     boolean javaBool( SqueakObject object )
     {
-        return object == SpecialObjects.trueObj; 
+        return object == SpecialObjects.trueObj;
     }
-    
+
     SqueakObject squeakNil()
     {
         return SpecialObjects.nilObj;
     }
-    
+
     SqueakObject squeakArray( Object[] javaArray )
     {
         SqueakObject array = vm.instantiateClass(
                 SpecialObjects.getSpecialObject(splOb_ClassArray),
                 javaArray.length
             );
-        for ( int index = 0; index < javaArray.length; index++ )
-            array.setPointer( index, javaArray[index] );
+        for ( int index = 0; index < javaArray.length; index++ ) {
+			array.setPointer( index, javaArray[index] );
+		}
 
         return array;
     }
@@ -196,33 +198,34 @@ public class PrimitiveHandler {
     {
         int secs = (int) ( millis / 1000 ); //milliseconds -> seconds
         secs += ( 69 * 365 + 17 ) * 24 * 3600; //Adjust from 1901 to 1970
-        
+
         return pos32BitIntFor(secs);
     }
-    
+
     /**
      * snapshotPrimitive
      *    "Primitive. Write the current state of the object memory on a file in the
      *    same format as the Smalltalk-80 release. The file can later be resumed,
      *    returning you to this exact state. Return normally after writing the file.
      *    Essential. See Object documentation whatIsAPrimitive."
-     *    
+     *
      *    <primitive: 97>
      *     ^nil "indicates error writing image file"
      */
     private void primitiveSnapshot()
     {
-        System.out.println( "Saving the image" );
-        try 
+
+        logger.info( "Saving the image...." );
+        try
         {
-            vm.image.saveImage( new File( "/tmp/image.gz" ) );
+            vm.image.saveImage( new File( "./changeMyName-java-image.ser" ) );
         }
-        catch ( Exception e ) 
+        catch ( Exception e )
         {
             throw failUnexpected(e);
         }
     }
-    
+
     /**
      * Primitive 121
      * "When called with a single string argument, record the string
@@ -230,23 +233,24 @@ public class PrimitiveHandler {
      * arguments, return a string containing the current image file
      * name."
      */
-    private Object primitiveImageFileName( int argCount ) 
+    private Object primitiveImageFileName( int argCount )
     {
-        if ( argCount == 0 )
-            return makeStString( vm.image.imageFile().getAbsolutePath() );
-        else
-            throw failUnexpected(new UnsupportedOperationException(
-                    "Cannot set the image name yet, argument is '" + 
+        if ( argCount == 0 ) {
+			return makeStString( vm.image.imageFile().getAbsolutePath() );
+		} else {
+			throw failUnexpected(new UnsupportedOperationException(
+                    "Cannot set the image name yet, argument is '" +
                     stackNonInteger( 0 ) + "'"
                 ));
+		}
     }
 
     /**
      * SystemDictionary>>vmPath.
      * Primitive 142.
-     * 
+     *
      * primVmPath
-     *   "Answer the path for the directory containing the Smalltalk virtual machine. 
+     *   "Answer the path for the directory containing the Smalltalk virtual machine.
      *   Return the empty string if this primitive is not implemented."
      *        "Smalltalk vmPath"
      *
@@ -258,7 +262,7 @@ public class PrimitiveHandler {
         return makeStString( System.getProperty( "user.dir" ) +
                 System.getProperty("file.separator"));
     }
-    
+
     //
     // primitive handling
     //
@@ -542,68 +546,68 @@ public class PrimitiveHandler {
                 case 18:
                     primitiveMakePoint();
                     break;
-                    
+
                 case 19:
                     // guard primitive for simulation - *must* fail
                     // we don't use the exception solution here to make this
                     // more explicit
                     return false;
-                    
+
                 case 21:
                     largeIntegerPrimitives.primitiveLargeIntegerAdd(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 22:
                     largeIntegerPrimitives.primitiveLargeIntegerSubtract(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                
+
                 case 23:
                     largeIntegerPrimitives.primitiveLargeIntegerLT(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                
+
                 case 24:
                     largeIntegerPrimitives.primitiveLargeIntegerGT(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 25:
                     largeIntegerPrimitives.primitiveLargeIntegerLE(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 26:
                     largeIntegerPrimitives.primitiveLargeIntegerGE(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 29:
                     largeIntegerPrimitives.primitiveLargeIntegerMultiply(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 30:
                     largeIntegerPrimitives.primitiveLargeIntegerDivide(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 31:
                     largeIntegerPrimitives.primitiveLargeIntegerModulo(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                
+
                 case 32:
                     largeIntegerPrimitives.primitiveLargeIntegerIntegralDivide(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 33:
                     largeIntegerPrimitives.primitiveLargeIntegerQuo(
                         stack.stackValue(1), stack.stackValue(0));
                     break;
-                    
+
                 case 40:
                     primitiveAsFloat();
                     break;
@@ -612,7 +616,7 @@ public class PrimitiveHandler {
                     break;
 
                 case 42:
-                    popNandPushFloatIfOK(2, stackFloat(1) - stackFloat(0));  // Float -	
+                    popNandPushFloatIfOK(2, stackFloat(1) - stackFloat(0));  // Float -
                     break;
 
                 case 43:
@@ -650,19 +654,19 @@ public class PrimitiveHandler {
                 case 51:
                     popNandPushIntIfOK(1, primitiveTruncate(stackFloat(0)));
                     break;
-                    
+
                 case 52:
                     popNandPushFloatIfOK(1, primitiveFractionalPart(stackFloat(0)));
                     break;
-                
+
                 case 53:
                     popNandPushIntIfOK(1, primitiveExponent(stackFloat(0)));
                     break;
-                    
+
                 case 54:
                     popNandPushFloatIfOK(2, primitiveTimesTwoPower(stackFloat(1), stackInteger(0)));
                     break;
-                    
+
                 case 58:
                     popNandPushFloatIfOK(1, StrictMath.log(stackFloat(0)));  // Float.ln
                     break;
@@ -686,15 +690,15 @@ public class PrimitiveHandler {
                 case 64:
                     popNandPushIfOK(3, primitiveAtPut(false, true, false)); // basicAt:put:
                     break;
-                    
+
                 case 65:
                     primitiveNext();
                     break;
-                    
+
                 case 66:
                     primitiveNextPut();
                     break;
-                    
+
                 case 67:
                     primitiveAtEnd();
                     break;
@@ -781,7 +785,7 @@ public class PrimitiveHandler {
                 case 90:
                     popNandPushIfOK(1, primitiveMousePoint()); // mousePoint
                     break;
-                
+
                 case 91:
                     // This primitive is unimplemented on purpose. In Squeak
                     // 2.2, it is supposed to be primCursorLocPut, while in 3.9,
@@ -794,6 +798,7 @@ public class PrimitiveHandler {
 
                 case 97:
                     primitiveSnapshot();
+                    break;
 
                 case 100:
                     vm.primitivePerformInSuperclass((SqueakObject) vm.stack.top()); // rcvr.perform:withArguments:InSuperclass
@@ -807,6 +812,51 @@ public class PrimitiveHandler {
                     beDisplay(); // DisplayScreen.beDisplay
                     break;
 
+
+
+                // GG PRIMITIVE 103
+                // See http://www.mirandabanda.org/bluebook/bluebook_chapter29.html
+//                    102 	DisplayScreen beDisplay
+//                    103* 	CharacterScanner scanCharactersFrom:to:in:rightX:stopConditions:displaying:
+//                    104* 	BitBlt drawLoopX:Y:
+                // See
+//                    scanCharactersFrom: startIndex to: stopIndex in: sourceString rightX: rightX stopConditions: stops displaying: display
+//                	"Primitive. This is the inner loop of text display--but see
+//                	scanCharactersFrom: to:rightX: which would get the string,
+//                	stopConditions and displaying from the instance. March through source
+//                	String from startIndex to stopIndex. If any character is flagged with a
+//                	non-nil entry in stops, then return the corresponding value. Determine
+//                	width of each character from xTable. If dextX would exceed rightX, then
+//                	return stops at: 258. If displaying is true, then display the character.
+//                	Advance destX by the width of the character. If stopIndex has been
+//                	reached, then return stops at: 257. Fail under the same conditions that
+//                	the Smalltalk code below would cause an error. Optional. See Object
+//                	documentation whatIsAPrimitive."
+
+/*
+ * 	| ascii nextDestX maxAscii |
+	<primitive: 103>
+	maxAscii _ xTable size-2.
+	lastIndex _ startIndex.
+	[lastIndex <= stopIndex]
+		whileTrue:
+			[ascii _ (sourceString at: lastIndex) asciiValue.
+			"ascii > maxAscii ifTrue: [ascii _ maxAscii]."
+			(stopConditions at: ascii + 1) == nil
+				ifFalse: [^stops at: ascii + 1].
+			sourceX _ xTable at: ascii + 1.
+			nextDestX _ destX + (width _ (xTable at: ascii + 2) - sourceX).
+			nextDestX > rightX ifTrue: [^stops at: CrossedX].
+			display ifTrue: [self copyBits].
+			destX _ nextDestX.
+			lastIndex _ lastIndex + 1].
+	lastIndex _ stopIndex.
+	^stops at: EndOfRun
+ */
+                case 103:
+                	return false;
+
+
                 case 104:
                     bitbltTable.primitiveDrawLoop(argCount, theDisplay); // DrawLoop
                     break;
@@ -816,7 +866,8 @@ public class PrimitiveHandler {
                     break;
 
                 case 106:
-                    popNandPushIfOK(1, makePointWithXandY(SmallInteger.smallFromInt(640), SmallInteger.smallFromInt(480))); // actualScreenSize
+
+                    popNandPushIfOK(1, makePointWithXandY(SmallInteger.smallFromInt(Constants.DEFAULT_WIDTH), SmallInteger.smallFromInt(Constants.DEFAULT_HEIGHT))); // actualScreenSize
                     break;
 
                 case 107:
@@ -846,11 +897,11 @@ public class PrimitiveHandler {
                 case 116:
                     methodCache.flushMethodCacheForMethod((SqueakObject) vm.stack.top());
                     break;
-                    
+
                 case 119:
                     methodCache.flushMethodCacheForSelector((SqueakObject) vm.stack.top());
                     break;
-                    
+
                 case 121:
                     popNandPushIfOK(1, primitiveImageFileName(argCount));
                     break;
@@ -878,7 +929,7 @@ public class PrimitiveHandler {
                 case 131:
                     popNandPushIfOK(1, SmallInteger.smallFromInt(objectTable.partialGC())); // GCmost
                     break;
-                
+
                 case 132:
                     popNandPushIfOK(2, primitiveObjectPointsTo());
                     break;
@@ -961,32 +1012,32 @@ public class PrimitiveHandler {
                 case 230:
                     primitiveYield(argCount); //yield for 10ms
                     break;
-                    
+
                 case 231:
                     theDisplay.redisplay(true);
                     break;
-                    
+
                 case 235:
                     popNandPushIntIfOK(3, primitiveStringCompareWithCollated());
                     break;
-                    
+
                 case 243:
                     primitiveStringTranslateFromToTable();
                     break;
-                    
+
                 case 245:
                     popNandPushIntIfOK(4, primitiveStringIndexOfAsciiInStringStartingAt());
                     break;
 
                 case 576:
                     String s = vm.stack.pop().toString();
-                    System.out.println(s);
+                    logger.info("PRIM576\t"+s);
                     break;
 
                 default: {
                     // undefined primitve
                     //throw primitiveFailed("undefined primitive: " + index);
-                    System.err.println("undefined primitive: " + index);
+                    logger.severe("undefined primitive: " + index);
                     return false;
                 }
 
@@ -1002,8 +1053,9 @@ public class PrimitiveHandler {
 
     void pop2andDoBoolIfOK(boolean bool) {
         vm.success = successFlag;
-        if(!vm.pushBoolAndPeek(bool))
-            throw failExpected();
+        if(!vm.pushBoolAndPeek(bool)) {
+			throw failExpected();
+		}
     }
 
     void popNandPushIfOK(int nToPop, Object returnValue) {
@@ -1128,27 +1180,30 @@ public class PrimitiveHandler {
         }
         return (new Double(floatVal)).intValue(); //**must be a better way
     }
-    
+
     double primitiveFractionalPart(double floatVal) {
         return floatVal - (int)floatVal;
     }
-    
+
     int primitiveExponent(double floatVal) {
-        if(floatVal >= 1.0)
-            return (int)StrictMath.floor(StrictMath.log(floatVal) / StrictMath.log(2.0));
+        if(floatVal >= 1.0) {
+			return (int)StrictMath.floor(StrictMath.log(floatVal) / StrictMath.log(2.0));
+		}
         if(floatVal > 0.0) {
             int positive = primitiveExponent(1.0 / floatVal);
-            if(floatVal == (1.0 / primitiveTimesTwoPower(1.0, positive)))
-                return -positive;
+            if(floatVal == (1.0 / primitiveTimesTwoPower(1.0, positive))) {
+				return -positive;
+			}
             return -positive - 1;
         }
-        if(floatVal == 0.0)
-            return -1;
+        if(floatVal == 0.0) {
+			return -1;
+		}
         return primitiveExponent(-floatVal);
     }
-    
+
     double primitiveTimesTwoPower(double floatVal, int power) {
-        return floatVal * StrictMath.pow(2.0, (double)power);
+        return floatVal * StrictMath.pow(2.0, power);
     }
 
     SqueakObject makeFloat(double value) {
@@ -1498,8 +1553,9 @@ public class PrimitiveHandler {
         }
         int index = checkSmallInt(streamBody[Constants.Stream_position]);
         int limit = indexableSize(array);
-        if(index >= limit)
-            throw failExpected();
+        if(index >= limit) {
+			throw failExpected();
+		}
         index++;
         Object result;
         SqueakObject sqArray = (SqueakObject)array;
@@ -1513,16 +1569,18 @@ public class PrimitiveHandler {
         } else {
             if(SpecialObjects.isA(sqArray, splOb_ClassString)) {
                 result = charFromInt(((byte[])sqArray.bits)[index - 1]);
-            } else
-                result = SmallInteger.smallFromInt(((byte[])sqArray.bits)[index - 1]);
+            } else {
+				result = SmallInteger.smallFromInt(((byte[])sqArray.bits)[index - 1]);
+			}
         }
         if(successFlag) {
             streamBody[Constants.Stream_position] = SmallInteger.smallFromInt(index);
             popNandPushIfOK(1, result);
-        } else
-            failExpected();
+        } else {
+			failExpected();
+		}
     }
-    
+
     void primitiveNextPut() {
         SqueakObject stream = stackNonInteger(1);
         if (!successFlag) {
@@ -1539,10 +1597,12 @@ public class PrimitiveHandler {
         int index = checkSmallInt(streamBody[Constants.Stream_position]);
         int limit = indexableSize(array);
         Object value = stack.stackValue(0);
-        if(!successFlag)
-            throw failExpected();
-        if (index >= limit)
-            throw failExpected();
+        if(!successFlag) {
+			throw failExpected();
+		}
+        if (index >= limit) {
+			throw failExpected();
+		}
         index++;
         SqueakObject sqArray = (SqueakObject)array;
         int fmt = sqArray.format;
@@ -1561,29 +1621,34 @@ public class PrimitiveHandler {
             }
             if(SmallInteger.isSmallInt(valToPut)) {
                 int intValToPut = SmallInteger.intFromSmall((Integer)valToPut);
-                if(!(intValToPut >= 0 && intValToPut <= 255))
-                    throw failExpected();
+                if(!(intValToPut >= 0 && intValToPut <= 255)) {
+					throw failExpected();
+				}
                 if(fmt >= 12 && fmt <= 15) {
                     ((byte[])sqArray.bits)[index - 4 * sqArray.pointersSize() - 1] = (byte)intValToPut;
-                } else
-                    ((byte[])sqArray.bits)[index - 1] = (byte)intValToPut;
-            } else
-                throw failExpected();
+                } else {
+					((byte[])sqArray.bits)[index - 1] = (byte)intValToPut;
+				}
+            } else {
+				throw failExpected();
+			}
         }
         if(successFlag) {
             streamBody[Constants.Stream_position] = SmallInteger.smallFromInt(index);
             popNandPushIfOK(2, value);
-        } else
-            throw failExpected();
+        } else {
+			throw failExpected();
+		}
     }
-    
+
     Integer asciiOfCharacter(SqueakObject c) {
-        if(!SpecialObjects.isA(c, splOb_ClassCharacter))
-            return SmallInteger.smallFromInt(0);
-        else
-            return c.fetchInteger(Constants.CharacterValueIndex);
+        if(!SpecialObjects.isA(c, splOb_ClassCharacter)) {
+			return SmallInteger.smallFromInt(0);
+		} else {
+			return c.fetchInteger(Constants.CharacterValueIndex);
+		}
     }
-    
+
     void primitiveAtEnd() {
         SqueakObject stream = (SqueakObject)stack.stackValue(0);
         if (!successFlag) {
@@ -1598,8 +1663,9 @@ public class PrimitiveHandler {
         int limit = indexableSize(array);
         if(successFlag) {
             popNandPushIfOK(1, squeakBool(index >= limit));
-        } else
-            throw failExpected();
+        } else {
+			throw failExpected();
+		}
     }
 
     SqueakObject primitiveBlockCopy() {
@@ -1653,7 +1719,7 @@ public class PrimitiveHandler {
         if (block.fetchPointer(Constants.BlockContext_caller) != SpecialObjects.nilObj) {
             throw failExpected();
         }
-        System.arraycopy((Object) vm.activeContext.pointers, vm.stack.sp - argCount + 1, (Object) block.pointers, Constants.Context_tempFrameStart, argCount);
+        System.arraycopy(vm.activeContext.pointers, vm.stack.sp - argCount + 1, block.pointers, Constants.Context_tempFrameStart, argCount);
         Integer initialIP = block.fetchInteger(Constants.BlockContext_initialIP);
         block.setPointer(Constants.Context_instructionPointer, initialIP);
         block.setPointer(Constants.Context_stackPointer, new Integer(argCount));
@@ -1820,18 +1886,22 @@ public class PrimitiveHandler {
         first.setPointer(Constants.Link_nextLink, SpecialObjects.nilObj);
         return first;
     }
-    
+
     SqueakObject primitiveObjectPointsTo() {
         Object thang = stack.stackValue(0);
         Object rcvr = stack.stackValue(1);
-        if(SmallInteger.isSmallInt(rcvr))
-            return squeakBool(false);
+        if(SmallInteger.isSmallInt(rcvr)) {
+			return squeakBool(false);
+		}
         SqueakObject sqr = (SqueakObject)rcvr;
-        if(!sqr.isPointers())
-            throw failExpected();
-        for(int i = 0; i < sqr.pointersSize(); i++)
-            if(sqr.fetchPointer(i) == thang)
-                return squeakBool(true);
+        if(!sqr.isPointers()) {
+			throw failExpected();
+		}
+        for(int i = 0; i < sqr.pointersSize(); i++) {
+			if(sqr.fetchPointer(i) == thang) {
+				return squeakBool(true);
+			}
+		}
         return squeakBool(false);
     }
 
@@ -1867,7 +1937,7 @@ public class PrimitiveHandler {
         //Note that the millisecond clock wraps around periodically.
         //The range is limited to SmallInteger maxVal / 2 to allow
         //delays of up to that length without overflowing a SmallInteger."
-        return SmallInteger.smallFromInt((int) (System.currentTimeMillis() & (long) (SmallInteger.maxSmallInt >> 1)));
+        return SmallInteger.smallFromInt((int) (System.currentTimeMillis() & (SmallInteger.maxSmallInt >> 1)));
     }
 
     /*
@@ -1877,16 +1947,16 @@ public class PrimitiveHandler {
 	rcvr := self stackTop.
 	self success: ((self isPointers: rcvr) and: [(self lengthOf: rcvr) >= 4]).
 	successFlag ifTrue: [self storePointer: TheDisplay ofObject: specialObjectsOop withValue: rcvr]
-     */ 
+     */
     void beDisplay() {
         SqueakObject rcvr = (SqueakObject) vm.stack.top(); // rcvr := self stackTop.
         success(rcvr.isPointers() && rcvr.lengthOf() >= 4); // self success: ((self isPointers: rcvr) and: [(self lengthOf: rcvr) >= 4]).
-        
+
         if(successFlag){ // successFlag ifTrue: [self storePointer: TheDisplay ofObject: specialObjectsOop withValue: rcvr]
             //SpecialObjects.specialObjects[splOb_TheDisplay] = rcvr;
             SpecialObjects.forceRegisterSpecialObject(rcvr, splOb_TheDisplay);
         }
-        
+
         FormCache disp = new FormCache(rcvr, vm);
         if (disp.squeakForm == null) {
             throw failExpected();
@@ -1904,7 +1974,7 @@ public class PrimitiveHandler {
         }
 
         theDisplay.setBits(displayBitmap, disp.depth);
-        
+
         if (!remap) {
             theDisplay.open();
         }
@@ -1973,36 +2043,36 @@ public class PrimitiveHandler {
         if (theDisplay == null) {
             return;
         }
-        
+
         SqueakObject cursorObj = SpecialObjects.nilObj;
         SqueakObject maskBitsIndex;
         SqueakObject bitsObj = SpecialObjects.nilObj;
         SqueakObject offsetObj = SpecialObjects.nilObj;
         int extentX, extentY, depth, offsetX, offsetY;
         extentX = extentY = depth = 0;
-        
+
         if (argCount == 0) { // argumentCount = 0 ifTrue: [
             cursorObj = stackNonInteger(0); // cursorObj := self stackTop.
             maskBitsIndex = SpecialObjects.nilObj; // maskBitsIndex := nil].
-        } 
+        }
         if(argCount == 1) {
             cursorObj = stackNonInteger(1); // cursorObj := self stackValue: 1.
             maskBitsIndex = stackNonInteger(0); // maskObj := self stackTop].
         }
 //        success(argCount < 2); // self success: (argumentCount < 2).
-//        
+//
 //        success(cursorObj.isPointers() && (cursorObj.lengthOf() >= 5)); // self success: ((self isPointers: cursorObj) and: [(self lengthOf: cursorObj) >= 5]).
-//        
+//
 //        if(successFlag){ // successFlag ifTrue: [
 //            bitsObj = cursorObj.fetchPointerNI(0); // bitsObj := self fetchPointer: 0 ofObject: cursorObj.
 //            extentX = cursorObj.fetchInteger(1); // extentX := self fetchInteger: 1 ofObject: cursorObj.
 //            extentY = cursorObj.fetchInteger(2); // extentY := self fetchInteger: 2 ofObject: cursorObj.
 //            depth = cursorObj.fetchInteger(3); // depth := self fetchInteger: 3 ofObject: cursorObj.
 //            offsetObj = cursorObj.fetchPointerNI(4); // offsetObj := self fetchPointer: 4 ofObject: cursorObj].
-//            
+//
 //            success(offsetObj.isPointers() && (offsetObj.lengthOf() >= 2)); // self success: ((self isPointers: offsetObj) and: [(self lengthOf: offsetObj) >= 2]).
 //        }
-//        
+//
 //        if(successFlag){
 //            offsetX = offsetObj.fetchInteger(0); // offsetX := self fetchInteger: 0 ofObject: offsetObj.
 //            offsetY = offsetObj.fetchInteger(1); // offsetY := self fetchInteger: 1 ofObject: offsetObj.
@@ -2018,9 +2088,9 @@ public class PrimitiveHandler {
 ////					((self fetchWord: i-1 ofObject: bitsObj) >> 16) bitAnd: 16rFFFF])
 ////				offset: offsetX  @ offsetY]].
 //        }
-        
-	
-        
+
+
+
         FormCache cursorForm = new FormCache(cursorObj, vm);
         if (!successFlag || cursorForm.squeakForm == null) {
             throw failExpected();
@@ -2087,7 +2157,7 @@ public class PrimitiveHandler {
 
     Object primitiveKbdPeek() {
         if (theDisplay == null) {
-            return (Object) SpecialObjects.nilObj;
+            return SpecialObjects.nilObj;
         }
         int peeked = theDisplay.keyboardPeek();
         return peeked == 0 ? (Object) SpecialObjects.nilObj : SmallInteger.smallFromInt(peeked);
@@ -2132,15 +2202,15 @@ public class PrimitiveHandler {
 
         return pos32BitIntFor(secs);
     }
-    
+
     void success(boolean value){
         successFlag = successFlag && value;
     }
-    
+
     //
     // addenda (primitives)
     //
-    
+
     int primitiveStringCompareWithCollated() {
         SqueakObject string1 = (SqueakObject)vm.stack.stackValue(2);
         SqueakObject string2 = (SqueakObject)vm.stack.stackValue(1);
@@ -2150,55 +2220,65 @@ public class PrimitiveHandler {
         for(int i = 0; i < Math.min(len1, len2); i++) {
             char c1 = (char)((byte[])order.bits)[((byte[])string1.bits)[i]]; // order at: (string1 basicAt: i) + 1
             char c2 = (char)((byte[])order.bits)[((byte[])string2.bits)[i]]; // order at: (string2 basicAt: i) + 1
-            if(c1 != c2)
-                if(c1 < c2)
-                    return 1;
-                else
-                    return 3;
+            if(c1 != c2) {
+				if(c1 < c2) {
+					return 1;
+				} else {
+					return 3;
+				}
+			}
         }
-        if(len1 == len2)
-            return 2;
-        if(len1 < len2)
-            return 1;
+        if(len1 == len2) {
+			return 2;
+		}
+        if(len1 < len2) {
+			return 1;
+		}
         return 3;
     }
-    
+
     void primitiveStringTranslateFromToTable() {
         SqueakObject string = stackNonInteger(3);
         int start = stackInteger(2);
         int stop = stackInteger(1);
         SqueakObject table = stackNonInteger(0);
-        if(!successFlag)
-            throw failExpected();
+        if(!successFlag) {
+			throw failExpected();
+		}
         byte[] stringBits = (byte[])string.bits;
         byte[] tableBits = (byte[])table.bits;
-        for(int k = start; k <= stop; k++)
-            stringBits[k - 1] = tableBits[stringBits[k - 1]];
+        for(int k = start; k <= stop; k++) {
+			stringBits[k - 1] = tableBits[stringBits[k - 1]];
+		}
         stack.popN(4);
     }
-    
+
     int primitiveStringIndexOfAsciiInStringStartingAt() {
         int startAt = stackInteger(0);
-        if(!successFlag)
-            throw failUnexpected("startAt is not an int");
-        SqueakObject str = (SqueakObject)stackNonInteger(1);
-        SqueakObject rcvr = (SqueakObject)stackNonInteger(3);
+        if(!successFlag) {
+			throw failUnexpected("startAt is not an int");
+		}
+        SqueakObject str = stackNonInteger(1);
+        SqueakObject rcvr = stackNonInteger(3);
         byte ascii = (byte)stackInteger(2);
-        if(!successFlag)
-            throw failUnexpected("ascii is not an int");
+        if(!successFlag) {
+			throw failUnexpected("ascii is not an int");
+		}
         int size = str.bitsSize();
-        for(int k = startAt; k <= size; k++)
-            if(((byte[])str.bits)[k - 1] == ascii)
-                return k;
+        for(int k = startAt; k <= size; k++) {
+			if(((byte[])str.bits)[k - 1] == ascii) {
+				return k;
+			}
+		}
         return 0;
     }
-    
+
     /**
      * This method is to be used to push the result of a LargeInteger primitive.
      * If the result of the primitive is a SmallInteger, the passed BigInteger
      * is coerced into a SmallInteger and pushed. Otherwise, the result is a
      * Large****tiveInteger, which is pushed if possible.
-     * 
+     *
      * @param big the result of a LargeInteger primitive.
      */
     void pop2andPushPossiblyCoercedBigIfOK(BigInteger big) {
@@ -2209,7 +2289,7 @@ public class PrimitiveHandler {
                         SpecialObjects.getSpecialObject(splOb_ClassLargePositiveInteger),
                         lpi_bytes.length
                     );
-                System.arraycopy(lpi_bytes, 0, (byte[])squeak_result.bits, 0, lpi_bytes.length);
+                System.arraycopy(lpi_bytes, 0, squeak_result.bits, 0, lpi_bytes.length);
                 squeak_result.assignLarge(big);
                 popNandPushIfOK(2, squeak_result);
             } else {
@@ -2222,7 +2302,7 @@ public class PrimitiveHandler {
             popNandPushIntIfOK(2, big.intValue());
         }
     }
-    
-    
-        
+
+
+
 }

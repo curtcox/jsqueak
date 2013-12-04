@@ -1,8 +1,8 @@
-/* 
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+/*
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,10 +28,10 @@ package potato;
 
 /**
  * @author Daniel Ingalls
- *  
+ *
  * @author Frank Feinbube
  * @author Robert Wierschke
- * 
+ *
  * Yet to do...
  * Reorganize as primitives < byte interpreter < message sending < contexts, object memory
  * object memory includes smallInts, classes, pointers, enumeration but NOT image reading
@@ -41,12 +41,15 @@ package potato;
  * separate out sched, array and stream(with at-cache), files, as well as bitblt
  */
 public interface Constants {
+
+	public final static String VERSION="0.1 CodeName: Red Bean";
+
 	// Class layout:
 	public final static int Class_superclass= 0;
 	public final static int Class_mdict= 1;
 	public final static int Class_format= 2;
 	public final static int Class_name= 6;
-	
+
         // Context layout
 	public final static int Context_sender= 0;
 	public final static int Context_instructionPointer= 1;
@@ -77,7 +80,7 @@ public interface Constants {
 	//Class Process"
 	public final static int Proc_suspendedContext= 1;
 	public final static int Proc_priority= 2;
-	public final static int Proc_myList= 3;	
+	public final static int Proc_myList= 3;
 	// Association layout:
 	public final static int Assn_key= 0;
 	public final static int Assn_value= 1;
@@ -96,4 +99,9 @@ public interface Constants {
 	public final static int Largeinteger_neg= 1;
         // Character layout
         public final static int CharacterValueIndex = 0;
+
+    // WINDOW LAYOUT:
+    public static final int DEFAULT_WIDTH =  800;  // Orig was 640
+    public static final int DEFAULT_HEIGHT = 600; //   Orig was 480
+
 }

@@ -33,6 +33,7 @@ import potato.*;
 import potato.javaAccess.JavaCall;
 import potato.image.SqueakImage;
 import java.util.*;
+import java.util.logging.Logger;
 import java.io.FileInputStream;
 
 import potato.primitives.PrimitiveFailedException;
@@ -47,6 +48,8 @@ import static potato.objects.SpecialObjectConstants.*;
  * The virtual machinery for executing Squeak bytecode.
  */
 public class VM {
+
+	Logger logger=Logger.getLogger(getClass().getName());
 
     // static state:
     public SqueakImage image;
@@ -189,6 +192,10 @@ public class VM {
     }
 
     public void run() throws java.io.IOException {
+
+
+    	logger.info("JSqueak "+Constants.VERSION);
+
         int b, b2;
         while (true) { //...Here's the basic evaluator loop...'
 //        printContext();
@@ -894,16 +901,24 @@ public class VM {
         return true;
     }
 
+
     public void send(SqueakObject selector, int argCount, boolean doSuper) {
         SqueakObject newMethod;
         int primIndex;
 
+
         Object newRcvr = stack.stackValue(argCount);
-//if(printString(selector).equals("error:"))
-//  dumpStack();// <---break here
-//     int stackDepth=stackDepth();
-//     stackedReceivers[stackDepth]=newRcvr;
-//     stackedSelectors[stackDepth]=selector;
+
+        // GG:Useful but very verobse
+        // logger.finer("Rcv="+newRcvr+" << "+selector);
+
+
+
+		//if(printString(selector).equals("error:"))
+		//  dumpStack();// <---break here
+		//     int stackDepth=stackDepth();
+		//     stackedReceivers[stackDepth]=newRcvr;
+		//     stackedSelectors[stackDepth]=selector;
         SqueakObject lookupClass = SpecialObjects.getClass(newRcvr);
 
         if (JavaCall.isJavaCall(selector, newRcvr)) {
@@ -911,6 +926,9 @@ public class VM {
             javaAdapter.invokeAndPushResult();
             return;
         }
+
+
+
 
         if (doSuper) {
             lookupClass = method.methodClassForSuper();
@@ -958,7 +976,7 @@ public class VM {
             currentClass = currentClass.fetchPointerNI(Constants.Class_superclass);
         }
 
-        System.out.println(selector);
+        logger.info(""+selector);
 
         //Cound not find a normal message -- send #doesNotUnderstand:
 //if(printString(selector).equals("zork"))

@@ -32,20 +32,24 @@ A special modified test-image1 is provided for unit testing (look at the zip ins
 This image has been altered via Squeak22.exe to provide an hook to a special bootstrap class
 The entry point is
  SystemDictionary << processStartUpList
+ Class DisplayScreen << startUp
 
-Class DisplayScreen << startUp
+GOALS
+-------------
+At the time of writing the first goal is to enable image saving in a custom format (at least)
+and to be able to do minimal Java interoperability (already some machinery in place, but not working right now).
 
-
-
+Documentation
+-----------------
+Blue Book: http://stephane.ducasse.free.fr/FreeBooks/BlueBook/Bluebook.pdf
 
 
 Change History
 ---------------
 December 2013
-+ SqueakImage: Removed usage of System.gc which is bad design parctice for new JVM. We must find a better way to remove weak references
++ SqueakImage: Removed usage of System.gc() which is bad design practice for new JVM. We must find a better way to remove weak references
 + Added JDK logging framework to track down stuff. Removed System.{out,err} to uniform this use
-+ TODO Better launch help
-+ Created "etc/" directory with some launch configurations
++ Added a strong jsqueak launcher leveraging JDK 1.6+ new GC technologies
 
 
 
@@ -54,31 +58,7 @@ Notes
 Based on a Squeak 2.2 mini image (2.2 is of Sep-1998)
 
 
-RESEE
-------
 
-Purpose of this repository: to understand Squeak, to understand JSqueak, hopefully enhance JSqueak.
-
-Goals:
-* Working Squeak GUI
-* Comprehensible source code
-* Saving image (not necessarily to the original binary format)
-* Loading image of current Squeak 3.9
-* Java interop: Java calling Smalltalk
-   e.g.:
-   ```java
-    Smalltalk st = new Smalltalk("my.image");
-    SmalltalkCallResult fiveSquares = st.eval("(1 to: 5) collect: [ :it | it*it ]");
-   ```
-* Java interop: Smalltalk calling Java
-   e.g.:
-   ```smalltalk
-   |jre|
-   jre := Java runtime.
-   (1 to: 5) do [ :it |
-      (jre getClass: System) out println: it. 
-   ]
-   ```
 
 [1] http://www.nabble.com/-squeak-dev--JSqueak%2C-the-erstwhile-Potato%2C-is-out%21-p18045925.html
 [2] http://news.squeak.org/2008/07/07/potato-version-of-jsqueak-from-hpi/

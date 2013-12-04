@@ -1,8 +1,8 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,23 +32,24 @@ The Smalltalk code is still annotated as comments.
 package potato.image;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * @author Daniel Ingalls
- *  
+ *
  * @author Frank Feinbube
  * @author Robert Wierschke
  */
-public class SqueakObjectHeader {
+public class SqueakObjectHeader implements Serializable {
 
-    
+
     public final static int BaseHeaderSize = 4;
-    
+
     public final static int TypeMask = 3;
     public final static int AllButTypeMask = 0xFFFFFFFF - TypeMask;
-    
+
     public final static int SizeMask = 0xFC;
-    
+
     // Squeak Headers
     public final static int HeaderTypeSizeAndClass = 0; //3-word header
     public final static int HeaderTypeClass = 1;        //2-word header
@@ -102,7 +103,7 @@ public class SqueakObjectHeader {
             classIndex = (baseHeaderWord >> 12) & 31;
         }
 
-        // read format        
+        // read format
         format = (short) ((baseHeaderWord >> 8) & 15);
 
         // read the object size if not get from size header
@@ -143,7 +144,7 @@ public class SqueakObjectHeader {
             throw new RuntimeException("unknown header type");
         }
     }
-    
+
     /*
     lengthOf: oop
 	"Return the number of indexable bytes or words in the given object. Assume the argument is not an integer. For a CompiledMethod, the size of the method header (in bytes) should be subtracted from the result."
@@ -152,11 +153,11 @@ public class SqueakObjectHeader {
 	self inline: true.
 	header := self baseHeader: oop.
 	^ self lengthOf: oop baseHeader: header format: ((header >> 8) bitAnd: 16rF)
-     */ 
+     */
     public int lengthOf(){
         return lengthOfbaseHeaderformat(headerType, headerType>>8 & 0xF);
     }
-    
+
     /*
     lengthOf: oop baseHeader: hdr format: fmt
 	"Return the number of indexable bytes or words in the given object. Assume the given oop is not an integer. For a CompiledMethod, the size of the method header (in bytes) should be subtracted from the result of this method."
@@ -170,7 +171,7 @@ public class SqueakObjectHeader {
 	fmt < 8
 		ifTrue: [ ^ (sz - BaseHeaderSize) >> 2 ]  "words"
 		ifFalse: [ ^ (sz - BaseHeaderSize) - (fmt bitAnd: 3) ]  "bytes"
-     */ 
+     */
     private int lengthOfbaseHeaderformat(int hdr, int fmt){
         int sz;
         if((hdr & TypeMask) == HeaderTypeSizeAndClass){
@@ -178,7 +179,7 @@ public class SqueakObjectHeader {
         } else {
             sz = hdr & SizeMask;
         }
-        
+
         if(fmt<8){
             return (sz-BaseHeaderSize) >> 2;
         } else {
