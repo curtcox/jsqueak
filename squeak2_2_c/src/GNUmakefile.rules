@@ -1,0 +1,106 @@
+# -*- Makefile -*- rules for Unix Squeak!
+#
+# last edited: Mon May 25 16:35:07 1998 by piumarta (Ian Piumarta) on tif
+
+VMSRC:=		$(GNU)$(VMGEN)
+VMOBJ:=		$(subst .c,.o,$(VMSRC))
+
+.PHONY:		bin jbin dep tidy clean spotless showconf
+
+# final link from relocable and userprims to executable
+
+$(VM):		$(VM).o $(UDP).o
+		$(LD) $(LDFLAGS) -o $(VM) $(VM).o $(UDP).o $(LIBDIRS) $(LIBS)
+
+# link all objects into single relocatable, omitting userprims
+
+$(VM).o:	$(VMOBJ) $(OBJECTS)
+		$(UTIL)verstamp $(VER).c $(VERSION) $(basename $(CC))
+		$(MAKE) $(VER).o
+		$(LDO) $(LDOFLAGS) -o $(VM).o $(VMOBJ) $(OBJECTS) $(VER).o
+
+$(VMOBJ):	$(VMSRC)
+		$(CC) $(CFLAGS) -c $<
+
+# rule to get from $(VMGEN) to $(VMSRC) only if the latter has "gnu-" prefix
+
+gnu-$(VMGEN):	$(VMGEN)
+		$(GAWK) -f $(GNUIFY) < $< > $@
+
+# add a rule to convert a generated VM in the parent directory if it exists
+
+ifeq ($(wildcard ../$(VMGEN)),../$(VMGEN))
+$(VMGEN):	../$(VMGEN)
+		$(SQCAT) $< > $@
+endif
+
+.c.o:
+		$(CC) $(CFLAGS) -c $<
+
+# housekeeping stuff
+
+bin:
+		[ -d ../bin ] || mkdir ../bin
+		cp $(VM) ../bin
+		strip ../bin/$(VM)
+		../bin/$(VM) -version
+
+jbin:
+		$(MAKE) VMGEN=translator.c VMNAME=Jitter bin
+
+dep:
+ifeq ($(CC),gcc)
+		$(CC) $(CCFLAGS) -MM -MG $(SRC) > .depend
+else
+		cat /dev/null > .depend
+		makedepend -f .depend $(SRC) $(HDR)
+endif
+		$(CC) $(CFLAGS) -MM $< > $@
+
+tidy:
+		/bin/rm -f *~ core *.bak
+
+clean:		tidy
+		/bin/rm -f *.o $(VMGEN) $(VMSRC)
+
+spotless:	clean
+		/bin/rm -f Sq* .depend
+
+# sanity check
+
+showconf:
+		@echo "UTSMAC     $(UTSMAC)"
+		@echo "UTSSYS     $(UTSSYS)"
+		@echo "UTSREL     $(UTSREL)"
+		@echo "MACHINE    $(MACHINE)"
+		@echo "SYSTEM     $(SYSTEM)"
+		@echo "RELEASE    $(RELEASE)"
+		@echo "VMNAME     $(VMNAME)"
+		@echo "MAJOR      $(MAJOR)"
+		@echo "MINOR      $(MINOR)"
+		@echo "SUBVERSION $(SUBVERSION)"
+		@echo "HEADLESS   $(HEADLESS)"
+		@echo "VERSION    $(VERSION)"
+		@echo "VMARCH     $(VMARCH)"
+		@echo "VMBUILD    $(VMBUILD)"
+		@echo "SRC        $(SRC)"
+		@echo "UTIL       $(UTIL)"
+		@echo "UDP        $(UDP)"
+		@echo "VER        $(VER)"
+		@echo "SOURCES    $(SOURCES)"
+		@echo "HEADERS    $(HEADERS)"
+		@echo "OBJECTS    $(OBJECTS)"
+		@echo "VPATH      $(VPATH)"
+		@echo "GNU        $(GNU)"
+		@echo "VMGEN      $(VMGEN)"
+		@echo "VMSRC      $(VMSRC)"
+		@echo "GNUIFY     $(GNUIFY)"
+		@echo "VM         $(VM)"
+		@echo "CC         $(CC)"
+		@echo "CCFLAGS    $(CCFLAGS)"
+		@echo "INCDIRS    $(INCDIRS)"
+		@echo "CFLAGS     $(CFLAGS)"
+		@echo "LD         $(LD)"
+		@echo "LIBDIRS    $(LIBDIRS)"
+		@echo "LIBS       $(LIBS)"
+		@echo "LDFLAGS    $(LDFLAGS)"

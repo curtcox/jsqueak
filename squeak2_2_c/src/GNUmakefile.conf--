@@ -1,0 +1,134 @@
+# -*- Makefile -*- configuration for Unix Squeak!
+#
+# last edited: Tue Aug 11 01:27:21 1998 by piumarta (Ian Piumarta) on clotho
+
+SQUEAKCONF=	GNUmakefile.conf
+SQUEAKLIST=	squeak@cs.uiuc.edu
+
+# paths to sources and utilities
+
+ifeq ($(wildcard ../src),../src)
+  SRC=		../src/
+endif
+
+ifeq ($(wildcard ../util),../util)
+  UTIL=		../util/
+endif
+
+SQCAT:=		$(UTIL)sqcat
+
+ifeq ($(VMGEN),interp.c)
+  GNUIFY:=	$(SRC)gnuify.trad
+else
+  GNUIFY:=	$(SRC)gnuify
+endif
+
+VPATH:=		$(SRC)
+
+# platform identification
+
+UTSMAC:=	$(shell arch     | tr [A-Z] [a-z])
+UTSSYS:=	$(shell uname -s | tr [A-Z] [a-z] | sed 's/-//g')
+UTSREL:=	$(shell uname -r | tr [A-Z] [a-z])
+
+ifeq ($(UTSMAC),sun4)
+  MACHINE:=sparc
+else
+  MACHINE:=$(UTSMAC)
+endif
+
+ifneq ($(findstring sunos-5,$(UTSSYS)-$(UTSREL)),)
+  SYSTEM:=solaris
+  RELEASE:=$(subst 5.5,2.5,$(UTSREL))
+else
+  SYSTEM:=$(UTSSYS)
+  RELEASE:=$(UTSREL)
+endif
+
+VMBUILD:=	$(MACHINE)-$(SYSTEM)-$(RELEASE)
+VMARCH:=	$(VMBUILD)
+
+############################################################################
+#									   #
+#			START OF CONFIGURATION SECTION			   #
+#									   #
+ifeq ($(SYSTEM),					linux)
+  CC=		gcc
+  CCFLAGS:=	-O2 -fomit-frame-pointer -g $(PROFILE)
+  LDO=		ld -r
+  LD=		gcc
+  LDFLAGS:=	 $(PROFILE)
+  LIBDIRS=	-L/usr/X11R6/lib
+  LIBS=		-lX11 -lXext -lm
+  GNU=		gnu-
+  GAWK=		awk
+endif
+
+ifeq ($(MACHINE)-$(SYSTEM),				alpha-osf1)
+  CC=		$(UTIL)decgcc
+  CCFLAGS:=	-O2 -g $(PROFILE)
+  LDO=		ld -taso -r
+  LD=		cc
+  LDFLAGS:=	-taso $(PROFILE)
+  LIBS=		-lX11 -lXext -lm
+  GNU=		gnu-
+  GAWK=		gawk
+endif
+
+ifeq ($(MACHINE)-$(SYSTEM),				sparc-solaris)
+  CC=		gcc
+  CCFLAGS:=	-O2 -g $(PROFILE)
+  INCDIRS=	-I/usr/openwin/include
+  LDO=		ld -r
+  LD=		gcc
+  LDFLAGS:=	$(PROFILE)
+  LIBDIRS=	-L/usr/openwin/lib
+  LIBS=		-lX11 -lXext -lm -lsocket -lnsl
+  GNU=		gnu-
+  GAWK=		gawk
+endif
+
+ifeq ($(MACHINE)-$(SYSTEM),				sparc-sunos)
+  CC=		gcc
+  CCFLAGS:=	-O2 -g $(PROFILE)
+  LDO=		ld -r
+  LD=		gcc
+  LDFLAGS:=	$(PROFILE)
+  LIBS=		-lX11 -lXext -lm
+  GNU=		gnu-
+  GAWK=		gawk
+endif
+
+ifeq ($(MACHINE)-$(SYSTEM),				hppa-hpux)
+  CC=		gcc
+  CCFLAGS:=	-O2 -g $(PROFILE)
+  LDO=		ld -r
+  LD=		gcc
+  LDFLAGS:=	$(PROFILE)
+  LIBS=		-lX11 -lXext -lm
+  GNU=		gnu-
+  GAWK=		gawk
+endif
+#									   #
+#		 	END OF CONFIGURATION SECTION			   #
+#									   #
+############################################################################
+
+override \
+CFLAGS+= $(CCFLAGS) $(INCDIRS) $(patsubst %,-I%,$(subst :, ,$(VPATH)))
+
+ifeq ($(VMGEN),translator.c)
+  override CFLAGS+= -DCCACHE
+endif
+
+# sanity checkpoint
+
+ifndef LDO
+error:
+	@echo
+	@echo "  there is no configuration for $(VMARCH)"		>&2
+	@echo "  please add one to the file $(SQUEAKCONF)"		>&2
+	@echo "  and then email your additions to: $(SQUEAKLIST)"	>&2
+	@echo
+	@exit 42
+endif

@@ -1,0 +1,95 @@
+#!/usr/bin/gawk -f
+#
+# Rewrite the interpreter source in $1 to use GNU C extensions, writing the
+# modified file to stdout.  Author: Ian.Piumarta@inria.fr
+#
+# Last edited: Sun Jan 11 02:21:09 1998 by piumarta (Ian Piumarta) on clotho
+
+BEGIN {
+  print "/* This file has been post-processed for GNU C */\n\
+\n\
+";
+  print "copying first section of file" > "/dev/stderr";
+  stage= 0;
+  inline= 1;
+}
+
+/#include "sq.h"/ {
+  print "#include \"sqGnu.h\"\n";
+  next;
+}
+
+# A prototype for internalPush means the interprer was not inlined
+
+/^int internalPush\(/ \
+{
+  inline= 0;
+  print;
+  next;
+}
+
+
+(stage == 0) && /^int interpret\(void\) \{/ {
+  print "interpret: adding static register assignments" > "/dev/stderr";
+  stage= 1;
+  print;
+  next;
+}
+
+(stage == 1) && /^    char \* localIP;/ {
+  print "    char * localIP IP_REG;";
+  next;
+}
+
+(stage == 1) && /^    char \* localSP;/ {
+  print "    char * localSP SP_REG;";
+  next;
+}
+
+(stage == 1) && /^    int currentBytecode;/ {
+# print "    unsigned char currentBytecode CB_REG;" */
+  print "    int currentBytecode CB_REG;";
+  next;
+}
+
+(stage == 1) && /^\}/ {
+  stage= 3;
+  print;
+  next;
+}
+
+(stage == 3) && /^int primitiveResponse\(/ {
+  print;
+  print "primitiveResponse: adding primitive dispatch table" > "/dev/stderr";
+  print "    PRIM_TABLE;\n";
+  print "primitiveResponse: rewriting case labels" > "/dev/stderr";
+  stage= 4;
+  FS="[ 	:]+";
+  next;
+}
+
+
+(stage == 4) && /^	switch \(primitiveIndex\) {/ {
+  print "	PRIM_DISPATCH;";
+  print;
+  next;
+}
+
+(stage == 4) && /^	case / {
+  print "	CASE(" $3 ")";
+  next;
+}
+
+(stage == 4) && /^\}/ {
+  print "copying last section of file" > "/dev/stderr";
+  stage= 5;
+  FS=" ";
+  print;
+  next;
+}
+
+# default
+{
+  print;
+  next;
+}
