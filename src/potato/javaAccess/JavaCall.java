@@ -36,6 +36,7 @@ import potato.vm.Stack;
  */
 public class JavaCall {
 
+	Logger logger=Logger.getLogger(getClass().getName());
     /**
      * The VM stack used to pass argument and result values.
      */
@@ -61,19 +62,19 @@ public class JavaCall {
         this.method = getMethodFromSelectorString(selector.toString());
     }
 
-    /**
-     * Checks if sending a given message to the given receiver is a Java call.
-     * @param selector  The message to be sended.
-     * @param newRcvr   The receiver of the message.
-     * @return          true if it is a Java call.
-     */
-    public static boolean isJavaCall(SqueakObject selector, Object newRcvr) {
-    	boolean isJavaCall=newRcvr.toString().equals("a UndefinedObject") && selector.toString().startsWith("JAVA");
-    	if(isJavaCall) {
-    		Logger.getLogger(JavaCall.class.getName()).info("isJavaCall>>" +selector );
-    	}
-        return isJavaCall;
-    }
+//    /**
+//     * Checks if sending a given message to the given receiver is a Java call.
+//     * @param selector  The message to be sended.
+//     * @param newRcvr   The receiver of the message.
+//     * @return          true if it is a Java call.
+//     */
+//    public static boolean isJavaCall(SqueakObject selector, Object newRcvr) {
+//    	boolean isJavaCall=newRcvr.toString().equals("a UndefinedObject") && selector.toString().startsWith("JAVA");
+//    	if(isJavaCall) {
+//    		Logger.getLogger(JavaCall.class.getName()).info("isJavaCall>>" +selector );
+//    	}
+//        return isJavaCall;
+//    }
 
     public void invokeAndPushResult() {
         try {
@@ -99,11 +100,19 @@ public class JavaCall {
         if (result instanceof Integer) {
             // TODO check if the result fits into SmallInteger value range
             // SmallInteger are already java.lang.Integer within Potato
-            this.stack.push(SmallInteger.smallFromInt((Integer) result));
+        	Object oop=SmallInteger.smallFromInt((Integer) result);
+        	logger.info("BUG001? "+result+" Converted to:"+oop);
+            this.stack.push(oop);
         }
     }
 
     private Method getMethodFromSelectorString(String selectorString) {
+    	return null;
+
+    }
+
+
+    private Method getMethodFromSelectorStringOLD(String selectorString) {
         if (!selectorString.startsWith("JAVA")) {
             throw new IllegalArgumentException(selectorString + " is no Java call.");
         } else {

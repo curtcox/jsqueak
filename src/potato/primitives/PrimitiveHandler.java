@@ -711,10 +711,30 @@ public class PrimitiveHandler {
                     popNandPushIfOK(3, primitiveAtPut(false, false, true)); // Method.objectAt:put:
                     break;
 
+/*
+ * basicNew
+	<primitive: 70>
+	self isVariable ifTrue: [^ self basicNew: 0].
+	Smalltalk signalLowSpace.
+	^ self basicNew
+ */
                 case 70:
                     popNandPushIfOK(1, vm.instantiateClass(stackNonInteger(0), 0)); // Class.new
                     break;
 
+    				/*
+    				 * 'From Squeak 2.2 of Sept 23, 1998 on 6 December 2013 at 2:21:53 pm'!
+
+    				!Behavior methodsFor: 'as yet unclassified'!
+    				basicNew: t1
+    					<primitive: 71>
+    					(t1 isInteger and: [t1 >= 0])
+    						ifTrue:
+    							[Smalltalk signalLowSpace.
+    							^ self basicNew: t1].
+    					self primitiveFailed! !
+
+    				 */
                 case 71:
                     popNandPushIfOK(2, primitiveNewWithSize()); // Class.new
                     break;
@@ -1029,10 +1049,25 @@ public class PrimitiveHandler {
                     popNandPushIntIfOK(4, primitiveStringIndexOfAsciiInStringStartingAt());
                     break;
 
-                case 576:
-                    String s = vm.stack.pop().toString();
-                    logger.info("PRIM576\t"+s);
-                    break;
+//                case 576:
+//                    String s = vm.stack.pop().toString();
+//                    logger.info("PRIM576\t"+s);
+//                    break;
+
+                    // From inerp.c of Squeak 2.2:
+                    // 	case 545:primitiveAsyncFileWriteStart();
+            		//  case 546:700: UNDEFINED
+
+                    //Class.new example:: popNandPushIfOK(2, primitiveNewWithSize()); // Class.new
+
+                case 1993:
+                	// newJavaObject:'java.lang.String'
+                	logger.info("Java interop primitive 1993. argCount="+argCount);
+                	popNandPushIfOK(2, primitiveNewJavaProxyWithName());
+                	break;
+                	//makeStString("TEST");
+                	//popNandPushIntIfOK(1,  1);
+                    //break;
 
                 default: {
                     // undefined primitve
@@ -1226,6 +1261,19 @@ public class PrimitiveHandler {
         newPoint.setPointer(Constants.Point_y, y);
         return newPoint;
     }
+
+    SqueakObject primitiveNewJavaProxyWithName(){
+    	SqueakObject o=stackNonInteger(0);
+    	 if (!successFlag) {
+             return SpecialObjects.nilObj;
+         }
+    	 final String fullClassName=""+o;
+    	 logger.info("primitiveNewJavaProxyWithName:"+o+" ["+o.getClass()+"]");
+
+    	 return vm.instantiateJavaProxyClass(fullClassName);
+    	 //return SpecialObjects.nilObj;
+    }
+
 
     SqueakObject primitiveNewWithSize() {
         int size = stackPos32BitValue(0);

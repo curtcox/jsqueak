@@ -42,7 +42,7 @@ package potato;
  */
 public interface Constants {
 
-	public final static String VERSION="0.1 CodeName: Red Bean";
+	public final static String VERSION="0.3 CodeName: Red Bean";
 
 	// Class layout:
 	public final static int Class_superclass= 0;

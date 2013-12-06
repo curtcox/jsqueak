@@ -26,11 +26,12 @@ THE SOFTWARE.
 package potato.vm;
 
 import potato.primitives.PrimitiveHandler;
+import potato.objects.AbstractSqueakObject;
+import potato.objects.JavaProxyObject;
 import potato.objects.SqueakObject;
 import potato.objects.SpecialObjects;
 import potato.objects.SmallInteger;
 import potato.*;
-import potato.javaAccess.JavaCall;
 import potato.image.SqueakImage;
 import java.util.*;
 import java.util.logging.Logger;
@@ -48,6 +49,8 @@ import static potato.objects.SpecialObjectConstants.*;
  * The virtual machinery for executing Squeak bytecode.
  */
 public class VM {
+	public static final int MAX_SENDS_TO_PRINT=30;
+    int sendsPrinted=0;
 
 	Logger logger=Logger.getLogger(getClass().getName());
 
@@ -910,9 +913,26 @@ public class VM {
         Object newRcvr = stack.stackValue(argCount);
 
         // GG:Useful but very verobse
+        // For boot processsing. Enabled for the first x sends
+    	if(++sendsPrinted < MAX_SENDS_TO_PRINT) {
+    		System.err.println(sendsPrinted+" ["+
+    				(newRcvr!=null?newRcvr.getClass():"null")
+    					+"] "+
+    				newRcvr+" << "+ selector );
+    	}
         // logger.finer("Rcv="+newRcvr+" << "+selector);
 
 
+    	if(printString(selector).equals("error:")){
+    		logger.severe("--- Error! --- Sends Breakpoint:"+sendsPrinted+" Max Printed:"+MAX_SENDS_TO_PRINT);
+    		dumpStack(); // <---break here
+    		/*Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 100
+				at potato.vm.VM.dumpStack(VM.java:1328)
+				at potato.vm.VM.send(VM.java:934)
+				at potato.vm.VM.run(VM.java:665)
+				at potato.Main.main(Main.java:80)
+    		 */
+    	}
 
 		//if(printString(selector).equals("error:"))
 		//  dumpStack();// <---break here
@@ -921,12 +941,49 @@ public class VM {
 		//     stackedSelectors[stackDepth]=selector;
         SqueakObject lookupClass = SpecialObjects.getClass(newRcvr);
 
-        if (JavaCall.isJavaCall(selector, newRcvr)) {
-            JavaCall javaAdapter = new JavaCall(stack, selector);
-            javaAdapter.invokeAndPushResult();
-            return;
-        }
+        //GG TODO Disabled in favor of Java primitive
+//        if (JavaCall.isJavaCall(selector, newRcvr)) {
+//            JavaCall javaAdapter = new JavaCall(stack, selector);
+//            javaAdapter.invokeAndPushResult();
+//            return;
+//        }
 
+        // Revert: Can Java object Respond? if true delegate,
+        // otherwise proceed
+        List<String> ignoredCalls=Arrays.asList(new String[]{
+        		"inspect",
+        		"defaultLabelForInspector",
+        		"basicSize",
+        		"mustBeBoolean",
+        		"printString",
+        		"printOn:",
+        		"storeOn:",
+        		"at:"
+        });
+        String selectorName=""+selector;
+        if(newRcvr instanceof AbstractSqueakObject)     {
+
+
+        	final boolean call2Ignore = ignoredCalls.contains(selectorName);
+			if( /*!call2Ignore &&*/ ((AbstractSqueakObject)newRcvr).isJavaProxy())
+        	{
+				JavaProxyObject jpo=(JavaProxyObject)newRcvr;
+				if(jpo.canRespondTo(selectorName)){
+	        		logger.info(sendsPrinted+" [ __ JAVA __ PROXY CALL: " + newRcvr + " << " + selector +"]");
+
+	        		jpo.invokeAndPushResult(stack,selectorName);
+
+//	        		JavaCall javaAdapter = new JavaCall(stack, selector);
+//	        		javaAdapter.invokeAndPushResult();
+	        		return;
+				}else{
+					logger.info(sendsPrinted+" [ Java "+newRcvr + " Ignored: " + selector+"]");
+				}
+        	}
+			if(call2Ignore && ((AbstractSqueakObject)newRcvr).isJavaProxy() ){
+				logger.info("Java Call Ignored:"+selectorName);
+			}
+        }
 
 
 
@@ -1035,10 +1092,8 @@ public class VM {
         }
     }
 
+
     public void executeNewMethod(Object newRcvr, SqueakObject newMethod, int argumentCount, int primitiveIndex) {
-//        System.out.println("sending method: " + newMethod + " to: " + newRcvr);
-
-
 
         if (primitiveIndex > 0) {
             if (tryPrimitive(primitiveIndex, argumentCount)) {
@@ -1085,9 +1140,9 @@ public class VM {
 
         receiver = newContext.fetchPointer(Constants.Context_receiver);
         if (receiver != newRcvr) {
-            System.err.println("receiver doesn't match");
-            System.err.println("  receiver: " + receiver);
-            System.err.println("  newRcvr: " + newRcvr);
+        	logger.severe("receiver doesn't match:"
+				        	+"\n\t  receiver: " + receiver
+				        	+"\n\t  newRcvr: " + newRcvr);
         }
         interruptHandler.checkForInterrupts();
     }
@@ -1148,6 +1203,10 @@ public class VM {
     public void primitivePerform(int argCount) {
         SqueakObject selector = (SqueakObject) stack.stackValue(argCount - 1);
         Object rcvr = stack.stackValue(argCount);
+
+
+
+
 //      NOTE: findNewMethodInClass may fail and be converted to #doesNotUnderstand:,
 //            (Whoah) so we must slide args down on the stack now, so that would work
         int trueArgCount = argCount - 1;
@@ -1252,6 +1311,26 @@ public class VM {
         return new SqueakObject(image, theClass, indexableSize, SpecialObjects.nilObj);
     }
 
+
+
+
+	public SqueakObject instantiateJavaProxyClass(final String fullClassName) {
+
+
+
+		return new JavaProxyObject(image,fullClassName);
+
+
+
+	}
+
+
+
+
+
+
+
+
     public void printContext() {
         if ((byteCount % 100) == 0 && stackDepth() > 100) {
             System.err.println("******Stack depth over 100******");
@@ -1295,11 +1374,13 @@ public class VM {
     }
 
     void dumpStack() {
+    	logger.info("Stack Dump....BEGIN");
         for (int i = 0; i < stackDepth(); i++) {
             if (stackedSelectors != null) {
-                System.err.println(stackedReceivers[i] + " >> " + stackedSelectors[i]);
+                logger.info(stackedReceivers[i] + " >> " + stackedSelectors[i]);
             }
         }
+        logger.info("Stack Dump....ENDS");
     }
 
     public void wakeVM()
@@ -1318,3 +1399,5 @@ public class VM {
         screenEvent = false;
     }
 }
+
+
