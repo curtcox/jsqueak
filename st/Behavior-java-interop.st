@@ -1,0 +1,1 @@
+'From Squeak 2.2 of Sept 23, 1998 on 6 December 2013 at 2:25:10 pm'!!Behavior methodsFor: 'java-interop' stamp: 'gg 12/6/2013 14:25'!javaNew: aStringJavaFullName 	<primitive: 1993>	self primitiveFailed! !

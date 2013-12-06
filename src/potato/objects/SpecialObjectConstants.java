@@ -1,8 +1,8 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke, Michael Haupt.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,11 +29,11 @@ package potato.objects;
 /**
  * This class serves as a pure constant container. The various constants are
  * indices for special objects in the special objects array.
- * 
+ *
  * @author Michael Haupt
  */
 public final class SpecialObjectConstants {
-    
+
     public final static int splOb_NilObject = 0;
     public final static int splOb_FalseObject = 1;
     public final static int splOb_TrueObject = 2;
@@ -42,6 +42,7 @@ public final class SpecialObjectConstants {
     public final static int splOb_ClassInteger = 5;
     public final static int splOb_ClassString = 6;
     public final static int splOb_ClassArray = 7;
+
     //public final static int splOb_SmalltalkDictionary= 8;  old slot 8
     public final static int splOb_ClassFloat = 9;
     public final static int splOb_ClassMethodContext = 10;

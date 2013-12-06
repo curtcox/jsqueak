@@ -37,6 +37,7 @@ import potato.*;
 import potato.image.SqueakObjectHeader;
 import potato.image.SqueakImage;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * @author Daniel Ingalls
@@ -53,11 +54,10 @@ import java.util.*;
  * need to replace all patterns of obj.pointers with an access function.
  * Then we would associate a finalization routine with those pointers.
  */
-public class SqueakObject implements Serializable
+public class SqueakObject extends AbstractSqueakObject implements Serializable
 {//Later make variants for common formats
-    /**
-	 *
-	 */
+
+	Logger logger=Logger.getLogger(getClass().getName());
 	private static final long serialVersionUID = 1L;
 
 	public short hash;        //12-bit Squeak hash
@@ -105,9 +105,10 @@ public class SqueakObject implements Serializable
         format = ((short) ((instSpec >> 7) & 0xF)); //This is the 0-15 code
 
         if (format < 8) {
-            if (format != 6) {
+            if (format !=  SpecialObjectConstants.splOb_ClassString /* 6*/) {
                 pointers = new Object[instSize + indexableSize];
                 Arrays.fill(pointers, filler);
+
             } else if (indexableSize >= 0) {
                 bits = new int[indexableSize];
             }
@@ -518,5 +519,10 @@ public class SqueakObject implements Serializable
     public void invalidateLarge() {
         pointers[0] = null;
     }
+
+	@Override
+	public boolean isJavaProxy() {
+		return false;
+	}
 
 }

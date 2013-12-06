@@ -1,0 +1,14 @@
+2013-12-06    <Giorgig@VT-GIORGIGIO>
+	* JSqueak 0.3: "Red Bean" First Release by Giovanni Giorgi
+	* src/potato/objects/ObjectTable.java: Removed usage of System.gc() which is bad design practice for new JVM. Let GC do its work.
+	* src/potato/Constants.java: Added VERSION constant
+	* (a lot of files): Added JDK logging framework to track down stuff. Removed System.{out,err} to uniform this use
+	* bin/jsqueak: Bash shell script jsqueak launcher leveraging JDK 1.6+ new GC technologies
+	* src/potato/primitives/PrimitiveHandler.java: Added primitive 1993 for Java inteorperability (ALPHA QUALITY)
+	* src/potato/image/SqueakImage.java: Started implementing a java-based serialization format   (BETA)
+
+2013-12-05    <Giorgig@VT-GIORGIGIO>
+	* JSqueak 0.2: Potato Fork https://svn.code.sf.net/p/potatovm/code/trunk/ r1542130
+	               based on Victor Rodriguez (victorr@gmail.com) evolution
+	* JSqueak 0.1: Original Dan Ingalls Version
+
