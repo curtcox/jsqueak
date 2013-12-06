@@ -9,6 +9,8 @@ test_images/*.st
 test_images/Squeak22.exe
 test_images/Squeak.ini
 
+Squeak-4.3-All-in-One.app/*
+Squeak-4.3-All-in-One.zip
 
 test_images/2.2.tar.gz
 *~
@@ -228,7 +230,4 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 resync.sh
-probe-service/com.gioorgi.probe.api/target
-probe-service/com.gioorgi.probe.war/target
-probe-service/probe-ear-demo/target
 
