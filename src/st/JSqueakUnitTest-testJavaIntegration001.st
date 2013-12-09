@@ -1,0 +1,1 @@
+'From Squeak 2.2 of Sept 23, 1998 on 5 December 2013 at 1:44:53 pm'!!JSqueakUnitTest methodsFor: 'bug201312' stamp: 'gg 12/5/2013 13:44'!testJavaIntegration001Transcript cr; show:'Java Integration Primitive 1993';cr;show:	(Object javaNew:'java.lang.Object').! !

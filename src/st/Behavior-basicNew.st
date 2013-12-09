@@ -1,0 +1,1 @@
+'From Squeak 2.2 of Sept 23, 1998 on 6 December 2013 at 2:21:53 pm'!!Behavior methodsFor: 'as yet unclassified'!basicNew: t1 	<primitive: 71>	(t1 isInteger and: [t1 >= 0])		ifTrue: 			[Smalltalk signalLowSpace.			^ self basicNew: t1].	self primitiveFailed! !

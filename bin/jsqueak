@@ -3,4 +3,4 @@ export GC_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=500"
 export OPTIMIZATION="-XX:CompileThreshold=5000 -XX:MaxPermSize=512m  -XX:ReservedCodeCacheSize=356m -XX:+CMSIncrementalPacing -XX:+UnlockExperimentalVMOptions -XX:+UseFastAccessorMethods"
 export JSQUEAK_OPTS="-Xmx1g -Xms512m $GC_OPTS $OPTIMIZATION "
 set -x -v
-$JAVA_HOME/bin/java -cp $JSQUEAK_HOME/build/ $JSQUEAK_OPTS potato.Main $*
+$JAVA_HOME/bin/java -cp $JSQUEAK_HOME/build/ $JSQUEAK_OPTS org.squeak.potato.Main $*

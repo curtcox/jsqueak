@@ -26,13 +26,15 @@ THE SOFTWARE.
 package org.squeak.potato.vm;
 
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.FileInputStream;
+import java.lang.reflect.Method;
 
 import org.squeak.potato.*;
 import org.squeak.potato.image.SqueakImage;
+import org.squeak.potato.javainterop.JavaProxyObject;
 import org.squeak.potato.objects.AbstractSqueakObject;
-import org.squeak.potato.objects.JavaProxyObject;
 import org.squeak.potato.objects.SmallInteger;
 import org.squeak.potato.objects.SpecialObjects;
 import org.squeak.potato.objects.SqueakObject;
@@ -919,7 +921,7 @@ public class VM {
     		System.err.println(sendsPrinted+" ["+
     				(newRcvr!=null?newRcvr.getClass():"null")
     					+"] "+
-    				newRcvr+" << "+ selector );
+    				newRcvr+" << "+ selector +" Args:"+argCount);
     	}
         // logger.finer("Rcv="+newRcvr+" << "+selector);
 
@@ -942,48 +944,27 @@ public class VM {
 		//     stackedSelectors[stackDepth]=selector;
         SqueakObject lookupClass = SpecialObjects.getClass(newRcvr);
 
-        //GG TODO Disabled in favor of Java primitive
-//        if (JavaCall.isJavaCall(selector, newRcvr)) {
-//            JavaCall javaAdapter = new JavaCall(stack, selector);
-//            javaAdapter.invokeAndPushResult();
-//            return;
-//        }
 
         // Revert: Can Java object Respond? if true delegate,
         // otherwise proceed
-        List<String> ignoredCalls=Arrays.asList(new String[]{
-        		"inspect",
-        		"defaultLabelForInspector",
-        		"basicSize",
-        		"mustBeBoolean",
-        		"printString",
-        		"printOn:",
-        		"storeOn:",
-        		"at:"
-        });
         String selectorName=""+selector;
-        if(newRcvr instanceof AbstractSqueakObject)     {
-
-
-        	final boolean call2Ignore = ignoredCalls.contains(selectorName);
-			if( /*!call2Ignore &&*/ ((AbstractSqueakObject)newRcvr).isJavaProxy())
+        if(newRcvr instanceof AbstractSqueakObject)   {
+			if( ((AbstractSqueakObject)newRcvr).isJavaProxy())
         	{
 				JavaProxyObject jpo=(JavaProxyObject)newRcvr;
-				if(jpo.canRespondTo(selectorName)){
+				Method m=jpo.translate2JavaMethod(selectorName);
+				if(m!=null){
 	        		logger.info(sendsPrinted+" [ __ JAVA __ PROXY CALL: " + newRcvr + " << " + selector +"]");
 
-	        		jpo.invokeAndPushResult(stack,selectorName);
+	        		jpo.invokeAndPushResult(stack,m);
 
 //	        		JavaCall javaAdapter = new JavaCall(stack, selector);
 //	        		javaAdapter.invokeAndPushResult();
 	        		return;
 				}else{
-					logger.info(sendsPrinted+" [ Java "+newRcvr + " Ignored: " + selector+"]");
+					logger.finer(sendsPrinted+" [ Java "+newRcvr + " Ignored: " + selector+"]");
 				}
         	}
-			if(call2Ignore && ((AbstractSqueakObject)newRcvr).isJavaProxy() ){
-				logger.info("Java Call Ignored:"+selectorName);
-			}
         }
 
 
@@ -1102,7 +1083,10 @@ public class VM {
 
             }
         }
+
+        // GG: WHERE GETS EXECUTED?!
         SqueakObject newContext = allocateOrRecycleContext(newMethod.methodNeedsLargeFrame());
+        //logger.info("\tnewContext="+newContext.);
         int methodNumLits = method.methodNumLits();
         //Our initial IP is -1, so first fetch gets bits[0]
         //The stored IP should be 1-based index of *next* instruction, offset by hdr and lits
@@ -1120,12 +1104,14 @@ public class VM {
         System.arraycopy(activeContext.pointers, stack.sp - argumentCount, newContext.pointers, Constants.Context_tempFrameStart - 1, argumentCount + 1);
         //...and fill the remaining temps with nil
         try {
-            Arrays.fill(newContext.pointers, Constants.Context_tempFrameStart + argumentCount, Constants.Context_tempFrameStart + tempCount, SpecialObjects.nilObj);
+			Arrays.fill(newContext.pointers, Constants.Context_tempFrameStart
+					+ argumentCount, Constants.Context_tempFrameStart
+					+ tempCount, SpecialObjects.nilObj);
         } catch (IllegalArgumentException e) {
-            System.out.println(newMethod);
-            System.out.println(newRcvr);
-
+        	logger.log(Level.SEVERE, "Cannot Build new Context newMethod="+newMethod+" newRcvr="+newRcvr,e);
+        	throw new SmallTalkVMException("Cannot Build new Context newMethod="+newMethod+" newRcvr="+newRcvr,e);
         }
+
         stack.popN(argumentCount + 1);
         reclaimableContextCount++;
         storeContextRegisters();

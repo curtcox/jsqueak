@@ -21,7 +21,7 @@ test_images/2.2.tar.gz
 *.pydevproject
 .project
 .metadata
-bin/
+# bin/
 tmp/
 *.tmp
 *.bak

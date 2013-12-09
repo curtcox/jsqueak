@@ -92,7 +92,7 @@ public class SqueakObject extends AbstractSqueakObject implements Serializable
     public Object[] pointers; //pointer fields; fixed as well as indexable
     // for Large****tiveInteger instances, pointers[0] holds the BigInteger rep
 
-    SqueakObject(SqueakImage img) {
+    protected SqueakObject(SqueakImage img) {
         //Creation of stub object (no pointers or bits)
         hash = img.registerObject(this);
     }
