@@ -1,8 +1,8 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,13 +25,15 @@ THE SOFTWARE.
 */
 package org.squeak.potato.objects;
 
+import java.util.logging.Logger;
+
 import org.squeak.potato.image.SqueakImage;
 
 import static org.squeak.potato.objects.SpecialObjectConstants.*;
 
 /**
  * @author Daniel Ingalls
- *  
+ *
  * @author Frank Feinbube
  * @author Robert Wierschke
  * @author Michael Haupt
@@ -41,70 +43,84 @@ public class SpecialObjects {
     public static SqueakObject nilObj;
     public static SqueakObject falseObj;
     public static SqueakObject trueObj;
-    
+
     private static Object[] specialObjects;
-    
+
     //
     // singleton management
     //
-    
+
     private static boolean initialised = false;
-    
+
     //
     // special objects instance creation
     //
-    
+
     public static void init(SqueakImage image) {
-        if(initialised)
-            throw new IllegalStateException("special objects already initialised");
+        if(initialised) {
+			throw new IllegalStateException("special objects already initialised");
+		}
         specialObjects = image.specialObjectsArray.pointers;
         initialised = true;
         nilObj = getSpecialObject(splOb_NilObject);
         falseObj = getSpecialObject(splOb_FalseObject);
         trueObj = getSpecialObject(splOb_TrueObject);
     }
-    
+
     //
     // special objects management
     //
 
     public static SqueakObject getSpecialObject(int zeroBasedIndex) {
-        if(!initialised)
-            throw new IllegalStateException("special objects not initialised");
+        if(!initialised) {
+			throw new IllegalStateException("special objects not initialised");
+		}
         return (SqueakObject)specialObjects[zeroBasedIndex];
     }
 
+
+
     // MEMORY ACCESS:
     public static SqueakObject getClass(Object obj) {
-        if(!initialised)
-            throw new IllegalStateException("special objects not initialised");
+    	Logger logger=Logger.getLogger(SpecialObjects.class.getName());
+        if(!initialised) {
+			throw new IllegalStateException("special objects not initialised");
+		}
         if (SmallInteger.isSmallInt(obj)) {
             return getSpecialObject(splOb_ClassInteger);
         }
+        // GG
+        if(obj==null){
+        	logger.severe("\n\tgetClass(null)!!\n");
+        	return null;
+        }
         return ((SqueakObject) obj).getSqClass();
     }
-    
+
     public static boolean isA(Object obj, int knownClass) {
-        if(!initialised)
-            throw new IllegalStateException("special objects not initialised");
+        if(!initialised) {
+			throw new IllegalStateException("special objects not initialised");
+		}
         Object itsClass = getClass(obj);
         return itsClass == specialObjects[knownClass];
     }
-    
+
     public static void registerSpecialObject(SqueakObject object, int specialObjSpec, int knownClass){
-        if(!initialised)
-            throw new IllegalStateException("special objects not initialised");
+        if(!initialised) {
+			throw new IllegalStateException("special objects not initialised");
+		}
         if (isA(object, knownClass)) {
             specialObjects[specialObjSpec] = object;
         } else {
             specialObjects[specialObjSpec] = nilObj;
         }
     }
-    
+
     // Use this one with extreme care!
     public static void forceRegisterSpecialObject(SqueakObject object, int specialObjectSpec) {
-        if(!initialised)
-            throw new IllegalStateException("special objects not initialised");
+        if(!initialised) {
+			throw new IllegalStateException("special objects not initialised");
+		}
         specialObjects[specialObjectSpec] = object;
     }
 

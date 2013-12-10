@@ -956,7 +956,7 @@ public class VM {
 				if(m!=null){
 	        		logger.info(sendsPrinted+" [ __ JAVA __ PROXY CALL: " + newRcvr + " << " + selector +"]");
 
-	        		jpo.invokeAndPushResult(stack,m);
+	        		jpo.invokeAndPushResult(m,stack,this);
 
 //	        		JavaCall javaAdapter = new JavaCall(stack, selector);
 //	        		javaAdapter.invokeAndPushResult();
@@ -1302,18 +1302,8 @@ public class VM {
 
 
 	public SqueakObject instantiateJavaProxyClass(final String fullClassName) {
-
-
-
 		return new JavaProxyObject(image,fullClassName);
-
-
-
 	}
-
-
-
-
 
 
 

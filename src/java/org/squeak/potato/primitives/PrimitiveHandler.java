@@ -976,6 +976,13 @@ public class PrimitiveHandler {
                     popNandPushIfOK(1, primitiveNextObject(stackNonInteger(0))); // Class.someInstance
                     break;
 
+//                case 141:
+//                	// GG BETA
+//                	logger.info("Storing in cliboard.");
+//                	CliboardHelper.setContent(stackNonInteger(0)+"");
+//                	popNandPushIfOK(1,SpecialObjects.nilObj);
+//                	break;
+
                 case 142:
                     popNandPushIfOK(1, primitiveVmPath());
                     break;

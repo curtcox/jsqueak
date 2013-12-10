@@ -14,6 +14,7 @@ import org.squeak.potato.objects.SmallInteger;
 import org.squeak.potato.objects.SpecialObjects;
 import org.squeak.potato.objects.SqueakObject;
 import org.squeak.potato.vm.Stack;
+import org.squeak.potato.vm.VM;
 
 
 /**
@@ -54,29 +55,41 @@ public class JavaProxyObject extends SqueakObject {
 			this.bits = new byte[pseudoString.length()];
 			System.arraycopy(pseudoString.getBytes(), 0, this.bits, 0, pseudoString.getBytes().length);
 
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch(Exception e) {
+			logger.log(Level.SEVERE,"Cannot proceed:",e);
+			throw new JavaProxyRuntimeException("Cannot create instance of "+fullClassName,e);
 		}
 
 
 
 	}
 
-	public JavaProxyObject(SqueakImage img) {
-		super(img);
+//	public JavaProxyObject(SqueakImage img) {
+//		super(img);
+//
+//	}
+//
+//	public JavaProxyObject(SqueakImage img, SqueakObject cls,
+//			int indexableSize, SqueakObject filler) {
+//		super(img, cls, indexableSize, filler);
+//	}
 
-	}
+	public JavaProxyObject(SqueakImage image, Object instance) {
+		super(image,
+				SpecialObjects.getSpecialObject(splOb_ClassString),
+				instance.getClass().getName().length(), SpecialObjects.nilObj);
 
-	public JavaProxyObject(SqueakImage img, SqueakObject cls,
-			int indexableSize, SqueakObject filler) {
-		super(img, cls, indexableSize, filler);
+		String fullClassName=instance.getClass().getName();
+		// potato.primitives.PrimitiveHandler.makeStString(String)
+		byte[] byteString = fullClassName.getBytes();
+		System.arraycopy(byteString, 0, this.bits, 0, byteString.length);
+
+		realJavaObjectRequested=instance;
+		String pseudoString=realJavaObjectRequested.hashCode()+" @ " +fullClassName;
+		logger.info("Java proxy From Instance OK");
+		this.bits = new byte[pseudoString.length()];
+		System.arraycopy(pseudoString.getBytes(), 0, this.bits, 0, pseudoString.getBytes().length);
+
 	}
 
 	@Override
@@ -128,8 +141,66 @@ public class JavaProxyObject extends SqueakObject {
 	}
 
 
+	/** Embed (converts) a java object into a Squak SmallTalk type if possible
+	 *
+	 * See also PrimitiveHandler for duplicated code like
+	 * org.squeak.potato.primitives.PrimitiveHandler.makeStString(String)
+	 *
+	 * @param instance
+	 * @return SqueakObject/Integer/JavaProxyObject
+	 */
+	public Object embed(Object result, VM vm){
 
-	public void invokeAndPushResult(Stack stack, Method m) {
+
+		if (result instanceof Integer && SmallInteger.canBeSmallInt((Integer) result)) {
+			// TODO check if the result fits into SmallInteger value range
+			// SmallInteger are already java.lang.Integer within Potato
+			Object oop=SmallInteger.smallFromInt((Integer) result);
+			return oop;
+		}
+
+
+		/** Known BUG:
+		 * When comparing a string result, weird things happens.
+		 *
+		 * '3'=='3' in SmallTalk
+		 * but here we are allocating a brand new object so seems only
+		 * '3' = '3'
+		 * because strings are not the same.
+		 *
+		 */
+		if(result instanceof String ){
+			String javaString=(String)result;
+	        byte[] byteString = javaString.getBytes();
+	        SqueakObject stString = vm.instantiateClass(SpecialObjects.getSpecialObject(splOb_ClassString), javaString.length());
+	        System.arraycopy(byteString, 0, stString.bits, 0, byteString.length);
+	        return stString;
+		}
+
+
+		// TODO: Consider storing big Integer (!) like  splOb_ClassLargePositiveInteger
+
+//		if (result instanceof Integer && !SmallInteger.canBeSmallInt((Integer) result)) {
+
+//          byte[] lpi_bytes = LargeInteger.squeakBytes(new BigInteger(result));
+//          SqueakObject squeak_result = vm.instantiateClass(
+//                  SpecialObjects.getSpecialObject(splOb_ClassLargePositiveInteger),
+//                  lpi_bytes.length
+//              );
+//          System.arraycopy(lpi_bytes, 0, squeak_result.bits, 0, lpi_bytes.length);
+//          squeak_result.assignLarge(big);
+//		}
+
+		// Embed in special object
+
+		return new JavaProxyObject(vm.image,result);
+//		JavaProxyObject jpo=vm.instantiateJavaProxyClass(result.getClass().getName());
+
+
+	}
+
+
+	public void invokeAndPushResult(Method m, Stack stack,VM vm) {
 		int p=m.getParameterTypes().length;
 		Object parameters[];
 		if(p>0){
@@ -153,27 +224,21 @@ public class JavaProxyObject extends SqueakObject {
 		try {
 			Object result=m.invoke(realJavaObjectRequested, parameters);
 			logger.info("<< "+m+" returns:"+result);
-			convertAndPushAsResult(result,stack);
+			convertAndPushAsResult(result,stack,vm);
 		}catch(Exception ex){
 			logger.log(Level.SEVERE, "Invoke "+m+" FAILED", ex);
-			convertAndPushAsResult(new Integer(-1),stack);
+			convertAndPushAsResult(new Integer(-1),stack,vm);
 		}
 
 
 	}
 
-	private void convertAndPushAsResult(Object result,Stack stack) {
+	private void convertAndPushAsResult(Object result,Stack stack,VM vm) {
 		stack.pop();   // remove the receiver from stack
 
-		if (result instanceof Integer) {
-			// TODO check if the result fits into SmallInteger value range
-			// SmallInteger are already java.lang.Integer within Potato
-			Object oop=SmallInteger.smallFromInt((Integer) result);
-			logger.info(" "+result+" Converted to:"+oop);
-			stack.push(oop);
-		}else{
-			throw new RuntimeException("Not yet implemented");
-		}
+		Object oop = embed(result, vm);
+		logger.info(" "+result+" Converted to:"+oop);
+		stack.push(oop);
 	}
 
 
