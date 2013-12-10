@@ -34,6 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.squeak.potato.*;
+import org.squeak.potato.clipboard.CliboardHelper;
 import org.squeak.potato.drawing.BitBlt;
 import org.squeak.potato.drawing.FormCache;
 import org.squeak.potato.drawing.Screen;
@@ -976,12 +977,10 @@ public class PrimitiveHandler {
                     popNandPushIfOK(1, primitiveNextObject(stackNonInteger(0))); // Class.someInstance
                     break;
 
-//                case 141:
-//                	// GG BETA
-//                	logger.info("Storing in cliboard.");
-//                	CliboardHelper.setContent(stackNonInteger(0)+"");
-//                	popNandPushIfOK(1,SpecialObjects.nilObj);
-//                	break;
+
+                case 141:
+                	primitiveClipboardText(argCount);
+                	break;
 
                 case 142:
                     popNandPushIfOK(1, primitiveVmPath());
@@ -1092,6 +1091,20 @@ public class PrimitiveHandler {
         }
         return true;
     }
+
+	private void primitiveClipboardText(int argCount) {
+		/* primitiveClipboardText
+		 * If with arg store content,
+		 * otherwise get content.
+		 */
+		if( argCount==1){
+			String v=""+stack.pop();
+			logger.info("Storing in cliboard:"+v);
+			CliboardHelper.setContent(v);
+		}else{
+			popNandPushIfOK(1,makeStString(CliboardHelper.getContent()));
+		}
+	}
 
     void pop2andDoBoolIfOK(boolean bool) {
         vm.success = successFlag;
