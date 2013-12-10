@@ -1,0 +1,3 @@
+#!/bin/bash
+# See http://developer.github.com/v3/issues/
+curl -i https://api.github.com/repos/daitangio/jsqueak/issues?status=open
