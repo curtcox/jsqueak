@@ -48,16 +48,16 @@ Or try out a simple test class:
 ```
 
 
+DOCUMENTATION
+--------------
+See http://potatovm.blogspot.it/ for two articles on potato VM.
+
+
 GOALS
 -------------
 At the time of writing the first goal is to do minimal Java interoperability and to enable image saving in a custom format (at least)
-
-Java interoperability can be reached defining a new special primitive "1993" to get a SqueakObject proxy of a 
-Java object instance (i.e. "Java" pseudo object).
-The primitive 1993 is able to create a new java object (empty construct right now).
-At the meantime the produced object is seen as a "Smalltalk String" but can trap every call versus java world.
-
 Secondary Goal is to be able to boot Squeak 2.2 image and then Squeak 3.x image (very far away target, anyway).
+
 
 
 
@@ -74,16 +74,6 @@ Please see ChangeLog for important release notes.
 Bugs
 --------
 See GitHub tracker
-
-
-
-Notes
------
-The code base seems based on a Squeak 2.2 mini image (2.2 is of Sep-1998)
-
-Squeak2.0 and Squeak 2.2 32bit image got a fatal error.
-Squeak 1.31 image starts, but for a display bug show very bad even with 1 bit depth. 
-Anyway it is unable to boot on Squeak2 VM so it is unlikely will be useful to be compatible.
 
 
 
