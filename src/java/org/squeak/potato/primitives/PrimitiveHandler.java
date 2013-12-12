@@ -1043,6 +1043,12 @@ public class PrimitiveHandler {
                     theDisplay.redisplay(true);
                     break;
 
+//                case 234:
+//                	logger.info("FAILING 234");
+//                	return false;
+//                	//break;
+
+
                 case 235:
                     popNandPushIntIfOK(3, primitiveStringCompareWithCollated());
                     break;
@@ -1102,6 +1108,7 @@ public class PrimitiveHandler {
 			logger.info("Storing in cliboard:"+v);
 			CliboardHelper.setContent(v);
 		}else{
+			logger.info("Got from Clipboard:"+CliboardHelper.getContent());
 			popNandPushIfOK(1,makeStString(CliboardHelper.getContent()));
 		}
 	}

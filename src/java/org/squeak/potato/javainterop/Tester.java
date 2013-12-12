@@ -20,4 +20,8 @@ public class Tester {
 	public String test_string(int a, int b){
 		return ""+(a+b);
 	}
+
+	public boolean test_is42(int n) {
+		return n ==42;
+	}
 }

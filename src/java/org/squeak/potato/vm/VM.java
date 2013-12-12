@@ -52,7 +52,10 @@ import static org.squeak.potato.objects.SpecialObjectConstants.*;
  * The virtual machinery for executing Squeak bytecode.
  */
 public class VM {
-	public static final int MAX_SENDS_TO_PRINT=30;
+	public static final int MAX_SENDS_TO_STORE=15;
+
+	private final List<String> circularBuffer= new ArrayList<String>(MAX_SENDS_TO_STORE);
+
     int sendsPrinted=0;
 
 	Logger logger=Logger.getLogger(getClass().getName());
@@ -908,6 +911,9 @@ public class VM {
     }
 
 
+    final List<String> breakPointMonitor=Arrays.asList("unhibernate",/*"Bitmap",*/"decodeIntFrom:");
+    final boolean deepDebuggerEnabled=true;
+
     public void send(SqueakObject selector, int argCount, boolean doSuper) {
         SqueakObject newMethod;
         int primIndex;
@@ -917,18 +923,54 @@ public class VM {
 
         // GG:Useful but very verobse
         // For boot processsing. Enabled for the first x sends
-    	if(++sendsPrinted < MAX_SENDS_TO_PRINT) {
-    		System.err.println(sendsPrinted+" ["+
-    				(newRcvr!=null?newRcvr.getClass():"null")
-    					+"] "+
-    				newRcvr+" << "+ selector +" Args:"+argCount);
+
+
+
+    	String v="\n\tStack Dump:";
+    	for(int i=argCount+3; i!=-1;i--){
+    		v+="\n\t"+(i)+" "+stack.stackValue(i);
     	}
+
+
+
+    	// We try to print it...
+    	String newRs=newRcvr+"";
+    	if(newRs.length()>80){
+    		newRs=newRs.substring(0,5)+" ??...??";
+    	}
+
+
+    	// Use .getSqueakClass() if it is a Squeak Class
+    	if(newRcvr instanceof SqueakObject){
+    		SqueakObject so=(SqueakObject)newRcvr;
+	    	circularBuffer.add((++sendsPrinted)+" ["+
+	    			so.getSqueakClassDebugDescription()
+					+"] "+
+				newRs+" << "+ selector +v);
+    	}else{
+	    	circularBuffer.add((++sendsPrinted)+" ["+
+					(newRcvr!=null?newRcvr.getClass():"null")
+					+"] "+
+				newRs+" << "+ selector +v);
+
+    	}
+
+
+		if(circularBuffer.size() > MAX_SENDS_TO_STORE){
+			circularBuffer.remove(0);
+		}
+
         // logger.finer("Rcv="+newRcvr+" << "+selector);
 
 
     	if(printString(selector).equals("error:")){
-    		logger.severe("--- Error! --- Sends Breakpoint:"+sendsPrinted+" Max Printed:"+MAX_SENDS_TO_PRINT);
-    		dumpStack(); // <---break here
+    		logger.severe("--- Error! --- Sends:"+sendsPrinted);
+
+    		prettyPrintDebugStackTrace();
+    		System.exit(-1000);
+    		return;
+    		//throw  this.primHandler.failUnexpected();
+    		//dumpStack(); // <---break here
     		/*Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 100
 				at potato.vm.VM.dumpStack(VM.java:1328)
 				at potato.vm.VM.send(VM.java:934)
@@ -936,6 +978,27 @@ public class VM {
 				at potato.Main.main(Main.java:80)
     		 */
     	}
+
+    	if(deepDebuggerEnabled){
+    		boolean printStackTrace=false;
+    		String foundGuy="";
+    		String s=circularBuffer.get(0);
+			for(String brk:breakPointMonitor){
+				if(s.contains(brk)){
+					printStackTrace=true;
+					foundGuy=brk+" into "+s;
+					break;
+				}
+			}
+
+    		if(printStackTrace){
+    			logger.info("DEBUG_____START_Trigger:"+foundGuy);
+        		prettyPrintDebugStackTrace();
+        		logger.info("DEBUG______ENDS");
+    		}
+    	}
+
+
 
 		//if(printString(selector).equals("error:"))
 		//  dumpStack();// <---break here
@@ -987,6 +1050,15 @@ public class VM {
 
         executeNewMethod(newRcvr, newMethod, argCount + (stack.sp - priorSP), primIndex); //DNU may affest argCount
     }
+
+	private void prettyPrintDebugStackTrace() {
+		String h="\n";
+		for(String s: circularBuffer){
+			h+=s+"\n";
+		}
+		h+="\n";
+		logger.info("Sends history:"+h);
+	}
 
     public MethodCacheEntry findSelectorInClass(SqueakObject selector, int argCount, SqueakObject startingClass) {
         MethodCacheEntry cacheEntry = methodCache.findMethodCacheEntry(selector, startingClass);

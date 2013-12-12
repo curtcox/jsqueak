@@ -151,6 +151,9 @@ public class JavaProxyObject extends SqueakObject {
 	 */
 	public Object embed(Object result, VM vm){
 
+		if(result==null){
+			return SpecialObjects.nilObj;
+		}
 
 		if (result instanceof Integer && SmallInteger.canBeSmallInt((Integer) result)) {
 			// TODO check if the result fits into SmallInteger value range
@@ -191,12 +194,23 @@ public class JavaProxyObject extends SqueakObject {
 //          squeak_result.assignLarge(big);
 //		}
 
-		// Embed in special object
 
+		//  Boolean conversion
+		if( result instanceof Boolean){
+			Boolean b=(Boolean)result;
+			if(b) {
+				return SpecialObjects.trueObj;
+			} else {
+				return SpecialObjects.falseObj;
+			}
+		}
+
+		if( result instanceof JavaProxyObject){
+			return result;
+		}
+
+		//  Standard Generic Proxy & FallbackObject
 		return new JavaProxyObject(vm.image,result);
-//		JavaProxyObject jpo=vm.instantiateJavaProxyClass(result.getClass().getName());
-
-
 	}
 
 

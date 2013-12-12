@@ -440,7 +440,7 @@ public class SqueakObject extends AbstractSqueakObject implements Serializable
             if (pointers != null) {
                 return "a CompiledMethod";
             } else {
-                // FIXME this returns unreadable stuff in some cases
+                // GG FIXME this returns unreadable stuff in some cases
                 return new String((byte[]) bits);
             }
         } else {
@@ -524,6 +524,14 @@ public class SqueakObject extends AbstractSqueakObject implements Serializable
 	@Override
 	public boolean isJavaProxy() {
 		return false;
+	}
+
+	/** Look at asString for better description
+	 *
+	 * @return
+	 */
+	public String getSqueakClassDebugDescription(){
+		return " sqClass="+this.sqClass+"";
 	}
 
 }

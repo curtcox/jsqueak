@@ -24,10 +24,28 @@ is the major trunk right now becase:
 Jump Start
 ------------
 A special modified test-image1 is provided for unit testing (look at the zip inside test_images folder)
-This image has been altered via Squeak22.exe to provide an hook to a special bootstrap class
+This image has been altered via Squeak22.exe to provide an hook to a special bootstrap class.
+The Special bootstrap class is used for running a bunch of test at boot.
 The entry point is
  SystemDictionary << processStartUpList
  Class DisplayScreen << startUp
+
+
+Java Inteoperability
+----------------------
+There is an Alpha stage java interoperability.
+The new primitive javaNew (number 1993) is able to create a java object instance, so you can write something like
+
+```smalltalk
+(Object javaNew: 'java.lang.Object') hashCode asString
+```
+
+Or try out a simple test class:
+
+```smalltalk
+(Object javaNew: 'org.squeak.potato.javainterop.Tester')
+				test: 1 two: 2
+```
 
 
 GOALS
@@ -40,6 +58,9 @@ The primitive 1993 is able to create a new java object (empty construct right no
 At the meantime the produced object is seen as a "Smalltalk String" but can trap every call versus java world.
 
 Secondary Goal is to be able to boot Squeak 2.2 image and then Squeak 3.x image (very far away target, anyway).
+
+
+
 
 Documentation
 -----------------
@@ -54,17 +75,28 @@ Bugs
 --------
 See GitHub tracker
 
+
+
 Notes
 -----
 The code base seems based on a Squeak 2.2 mini image (2.2 is of Sep-1998)
+
+Squeak2.0 and Squeak 2.2 32bit image got a fatal error.
+Squeak 1.31 image starts, but for a display bug show very bad even with 1 bit depth. 
+Anyway it is unable to boot on Squeak2 VM so it is unlikely will be useful to be compatible.
+
+
+
 
 
 [1] http://www.nabble.com/-squeak-dev--JSqueak%2C-the-erstwhile-Potato%2C-is-out%21-p18045925.html
 [2] http://news.squeak.org/2008/06/21/jsqueak-smalltalk-interpreter-written-in-java/
 [3] http://news.squeak.org/2008/07/07/potato-version-of-jsqueak-from-hpi/
 
+```emacs
 Local Variables:
 mode: markdown
 mode: visual-line
 coding: utf-8
 End:
+```

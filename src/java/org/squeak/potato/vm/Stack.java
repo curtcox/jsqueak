@@ -1,8 +1,8 @@
 /*
-This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
+This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak).
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,18 +32,18 @@ import static org.squeak.potato.objects.SpecialObjectConstants.*;
 
 /**
  * @author Daniel Ingalls
- *  
+ *
  * @author Frank Feinbube
  * @author Robert Wierschke
  */
 public class Stack {
     VM squeakVM;
     public int sp;
-    
+
     public Stack(VM squeakVM){
         this.squeakVM = squeakVM;
     }
-    
+
     // STACKFRAME ACCESS:
     public boolean isContext(SqueakObject obj) {//either block or methodContext
 
@@ -84,6 +84,11 @@ public class Stack {
         return squeakVM.activeContext.pointers[sp];
     }
 
+    /**
+     * Do a peek on the stack without altering it
+     * @param depthIntoStack
+     * @return
+     */
     public Object stackValue(int depthIntoStack) {
         return squeakVM.activeContext.pointers[sp - depthIntoStack];
     }
