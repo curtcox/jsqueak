@@ -52,7 +52,10 @@ import static org.squeak.potato.objects.SpecialObjectConstants.*;
  * The virtual machinery for executing Squeak bytecode.
  */
 public class VM {
-	public static final int MAX_SENDS_TO_STORE=15;
+	public static final int MAX_SENDS_TO_STORE=10, STACK_DEBUG_SIZE=16;
+
+    final List<String> breakPointMonitor=Arrays.asList( /*"unhibernate","Bitmap","decodeIntFrom:"*/);
+    public static final boolean DeepDebuggerEnabled=System.getProperty("jsqueak.debug.flag") != null;
 
 	private final List<String> circularBuffer= new ArrayList<String>(MAX_SENDS_TO_STORE);
 
@@ -911,8 +914,7 @@ public class VM {
     }
 
 
-    final List<String> breakPointMonitor=Arrays.asList("unhibernate",/*"Bitmap",*/"decodeIntFrom:");
-    final boolean deepDebuggerEnabled=true;
+
 
     public void send(SqueakObject selector, int argCount, boolean doSuper) {
         SqueakObject newMethod;
@@ -927,16 +929,30 @@ public class VM {
 
 
     	String v="\n\tStack Dump:";
-    	for(int i=argCount+3; i!=-1;i--){
-    		v+="\n\t"+(i)+" "+stack.stackValue(i);
-    	}
+
+	    	for(int i=argCount+STACK_DEBUG_SIZE; i!=-1;i--){
+	    		try{
+		    		final Object stackValue = stack.stackValue(i);
+		    		if(stackValue!=null && stackValue instanceof SqueakObject &&
+		    				((SqueakObject) stackValue).isByteArray())
+		    		{
+		    			v+="\n\t"+(i)+" ...ByteArray...";
+		    		} else {
+						v+="\n\t"+(i)+" "+stackValue;
+					}
+	        	}catch(ArrayIndexOutOfBoundsException e){
+	        		//v+="\n\tTopOfStack";
+	        	}
+
+	    	}
 
 
 
     	// We try to print it...
     	String newRs=newRcvr+"";
+
     	if(newRs.length()>80){
-    		newRs=newRs.substring(0,5)+" ??...??";
+    		newRs=newRs.substring(0,70)+" ??...??";
     	}
 
 
@@ -944,9 +960,10 @@ public class VM {
     	if(newRcvr instanceof SqueakObject){
     		SqueakObject so=(SqueakObject)newRcvr;
 	    	circularBuffer.add((++sendsPrinted)+" ["+
-	    			so.getSqueakClassDebugDescription()
-					+"] "+
-				newRs+" << "+ selector +v);
+	    			so.sqClass+
+//	    			(so.isByteArray()?"*ByteArray*":so.toString())+
+					"] "+
+					(so.isByteArray()?"*ByteArray*"+(so.bits) :newRs)+" << "+ selector +v);
     	}else{
 	    	circularBuffer.add((++sendsPrinted)+" ["+
 					(newRcvr!=null?newRcvr.getClass():"null")
@@ -963,7 +980,7 @@ public class VM {
         // logger.finer("Rcv="+newRcvr+" << "+selector);
 
 
-    	if(printString(selector).equals("error:")){
+    	if(DeepDebuggerEnabled &&  printString(selector).equals("error:")){
     		logger.severe("--- Error! --- Sends:"+sendsPrinted);
 
     		prettyPrintDebugStackTrace();
@@ -979,7 +996,7 @@ public class VM {
     		 */
     	}
 
-    	if(deepDebuggerEnabled){
+    	if(DeepDebuggerEnabled){
     		boolean printStackTrace=false;
     		String foundGuy="";
     		String s=circularBuffer.get(0);
@@ -1015,7 +1032,7 @@ public class VM {
 			if( ((AbstractSqueakObject)newRcvr).isJavaProxy())
         	{
 				JavaProxyObject jpo=(JavaProxyObject)newRcvr;
-				Method m=jpo.translate2JavaMethod(selectorName);
+				Method m=jpo.translate2JavaMethod(selectorName,stack);
 				if(m!=null){
 	        		logger.info(sendsPrinted+" [ __ JAVA __ PROXY CALL: " + newRcvr + " << " + selector +"]");
 
@@ -1239,22 +1256,46 @@ public class VM {
         } else {
             int spBefore = stack.sp;
             boolean success = primHandler.doPrimitive(primIndex, argCount);
-//            if(success) {
-//                if(primIndex>=81 && primIndex<=88) return success; // context switches and perform
-//                if(primIndex>=43 && primIndex<=48) return success; // boolean peeks
-//                if(sp != (spBefore-argCount))
-//                    System.err.println("***Stack imbalance on primitive #" + primIndex);}
-//            else{
-//                if(sp != spBefore)
-//                    System.err.println("***Stack imbalance on primitive #" + primIndex);
-//                if(primIndex==103) return success; // scan chars
-//                if(primIndex==230) return success; // yield
-//                if(primIndex==19) return success; // fail
-//                System.err.println("At bytecount " + byteCount + " failed primitive #" + primIndex);
-//                if (primIndex==80) {
-//                    dumpStack();
-//                    int a=primIndex; } // <-- break here
-//                }
+//            if(!success && primIndex!=19){
+//            	if(DeepDebuggerEnabled){
+//            		logger.severe("FAILED PRIMITIVE:"+primIndex+" ARG COUNT:"+argCount);
+//            		//System.exit(0);
+//            	}
+//            }
+
+			// GG This code seems useful for debugging
+			if (success && !((primIndex >= 81 && primIndex <= 88))
+					&& !((primIndex >= 43 && primIndex <= 48))
+
+			) {
+				if (DeepDebuggerEnabled && stack.sp != (spBefore - argCount)) {
+					logger.severe("***Stack imbalance on primitive #"
+							+ primIndex);
+				}
+			} else {
+				if (DeepDebuggerEnabled && stack.sp != spBefore) {
+					logger.severe("***Stack imbalance on primitive #"
+							+ primIndex + " (Primitive FAILED status)");
+				}
+				if (primIndex == 103) {
+					return success; // scan chars
+				}
+				if (primIndex == 230) {
+					return success; // yield
+				}
+				if (primIndex == 19) {
+					return success; // fail
+				}
+				if(DeepDebuggerEnabled) {
+					logger.severe("At bytecount " + byteCount
+							+ " failed primitive #" + primIndex);
+				}
+				if (primIndex == 80) {
+					// dumpStack();
+					// int a=primIndex; } // <-- break here
+				}
+			}
+
             return success;
         }
     }

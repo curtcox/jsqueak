@@ -53,7 +53,7 @@ public class LargeIntegerPrimitives {
     void primitiveLargeIntegerDivide(Object a, Object b) {
         BigInteger big_b = LargeInteger.coerceToBig(b);
         if(big_b.equals(BigInteger.ZERO))
-            throw fHandler.failUnexpected("division by zero");
+            throw new UnexpectedPrimitiveFailedException("division by zero");
         BigInteger[] results =
             LargeInteger.getOrCacheBig((SqueakObject)a).divideAndRemainder(big_b);
         // If the remainder is not zero, the result should be a Fraction, which
@@ -67,7 +67,7 @@ public class LargeIntegerPrimitives {
     void primitiveLargeIntegerIntegralDivide(Object a, Object b) {
         BigInteger big_b = LargeInteger.coerceToBig(b);
         if(big_b.equals(BigInteger.ZERO))
-            throw fHandler.failUnexpected("division by zero");
+            throw new UnexpectedPrimitiveFailedException("division by zero");
         fHandler.pop2andPushPossiblyCoercedBigIfOK(
             LargeInteger.getOrCacheBig((SqueakObject)a).divide(big_b));
     }
@@ -101,7 +101,7 @@ public class LargeIntegerPrimitives {
     void primitiveLargeIntegerModulo(Object a, Object b) {
         BigInteger big_b = LargeInteger.coerceToBig(b);
         if(big_b.equals(BigInteger.ZERO))
-            throw fHandler.failUnexpected("division by zero");
+            throw new UnexpectedPrimitiveFailedException("division by zero");
         fHandler.pop2andPushPossiblyCoercedBigIfOK(
             LargeInteger.getOrCacheBig((SqueakObject)a).mod(big_b));
     }
@@ -109,7 +109,7 @@ public class LargeIntegerPrimitives {
     void primitiveLargeIntegerQuo(Object a, Object b) {
         BigInteger big_b = LargeInteger.coerceToBig(b);
         if(big_b.equals(BigInteger.ZERO))
-            throw fHandler.failUnexpected("division by zero");
+            throw new UnexpectedPrimitiveFailedException("division by zero");
         BigInteger[] results =
             LargeInteger.getOrCacheBig((SqueakObject)a).divideAndRemainder(big_b);
         // The idea about quo is to round towards zero. That is, *if* there *is*

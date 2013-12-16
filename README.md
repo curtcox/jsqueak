@@ -1,8 +1,9 @@
 JSqueak -- Java implementation of the Squeak Smalltalk Virtual Machine
 ----------------------------------------------------------------------
 
-This is a fork of JSqueak, a Java 
-implementation of the Squeak Smalltalk virtual machine first born in 2008
+This is a fork of JSqueak, a Java  implementation of the Squeak Smalltalk virtual machine first born in 2008
+
+http://daitangio.github.io/jsqueak is the official web site
 
 JSqueak was released under the MIT license (see the announcement[1] but also [2]).
 

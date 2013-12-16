@@ -94,7 +94,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            throw fHandler.failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 
@@ -120,7 +120,7 @@ class FileSystemPrimitives
         }
         catch (IOException e)
         {
-            throw fHandler.failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 
@@ -143,7 +143,7 @@ class FileSystemPrimitives
         }
         catch (IOException e)
         {
-            throw fHandler.failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 
@@ -188,14 +188,14 @@ class FileSystemPrimitives
 				try {
 					file = new RandomAccessFile( fileName.asString()+".win.locked", mode );
 				} catch (FileNotFoundException e1) {
-					throw fHandler.failUnexpected(e1);
+					throw new UnexpectedPrimitiveFailedException(e1);
 				}
                 SqueakObject fileId = fHandler.makeStString( "fileId: " + fileName.asString() );
                 setFile( fileId, file );
 
                 return fileId;
         	}else{
-        		throw fHandler.failUnexpected(e);
+        		throw new UnexpectedPrimitiveFailedException(e);
         	}
         }
     }
@@ -235,7 +235,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            throw fHandler.failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 
@@ -261,7 +261,7 @@ class FileSystemPrimitives
         }
         catch (IOException e)
         {
-            throw fHandler.failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 
@@ -307,7 +307,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            throw fHandler.failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 
@@ -347,7 +347,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            throw fHandler.failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 

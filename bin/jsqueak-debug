@@ -1,7 +1,8 @@
 #!/bin/bash
+export DEBUG="-Djsqueak.debug.flag=yeppa"
 export GC_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=500"
 export OPTIMIZATION="-XX:MaxPermSize=512m -client"
-export JSQUEAK_OPTS="-Xmx1g -Xms512m $GC_OPTS $OPTIMIZATION "
+export JSQUEAK_OPTS="-Xmx1g -Xms512m $GC_OPTS $OPTIMIZATION $DEBUG"
 set -x -v
-$JAVA_HOME/bin/java -cp $JSQUEAK_HOME/build/ $JSQUEAK_OPTS org.squeak.potato.Main $* >&/c/tmp/jsqueak.log
+$JAVA_HOME/bin/java -cp $JSQUEAK_HOME/build/ $JSQUEAK_OPTS org.squeak.potato.Main $* 
 

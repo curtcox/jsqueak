@@ -13,15 +13,31 @@ public class Tester {
 	 * @param b
 	 * @return
 	 */
-	public Integer test_two(int a, int b){
+	public Integer test_two(Integer a, Integer b){
 		return a+b;
 	}
 
-	public String test_string(int a, int b){
+	public String test_string(Integer a, Integer b){
 		return ""+(a+b);
 	}
 
-	public boolean test_is42(int n) {
+	public boolean test_is42(Integer n) {
 		return n ==42;
 	}
+
+	// A group of classes to test overloading and type conversion between SmallTalk
+	// and java
+
+	public Object testOverloading(String s){
+		return s+s;
+	}
+
+	public Object testOverloading(Integer i){
+		return i+i;
+	}
+
+	public Object testOverloading(Float f){
+		return f+f;
+	}
+
 }

@@ -34,6 +34,8 @@ public class JavaProxyObject extends SqueakObject {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private Object[] currentParamsFromStacks;
+
 	public JavaProxyObject() {
 
 	}
@@ -110,7 +112,7 @@ public class JavaProxyObject extends SqueakObject {
 	 * @param selectorName
 	 * @return The Method if possible, null if cannot respond
 	 */
-	public Method translate2JavaMethod(String smallTalkSelectorName) {
+	public Method translate2JavaMethod(String smallTalkSelectorName,Stack stack) {
 		int expectedParameters=
 				smallTalkSelectorName.contains(":")?
 				smallTalkSelectorName.split(":").length:0;
@@ -124,20 +126,39 @@ public class JavaProxyObject extends SqueakObject {
 			selectorName=smallTalkSelectorName;
 			logger.info("Parameters Selector:"+selectorName);
 		}
-		for(Method m:realJavaObjectRequested.getClass().getMethods()){
 
-			if(m.getName().equals(selectorName)){
-				if(m.getParameterTypes().length == expectedParameters) {
-					logger.info("FOUND:"+m);
-					return m;
-				}else{
-					logger.info("Parmeter Match failed:"+m+"#" +m.getParameterTypes().length+
-							" vs "+selectorName);
-				}
 
-			}
+		 currentParamsFromStacks = getParamsFromStackAndRemoveThem(stack, expectedParameters);
+		 Class<?>[] parameterTypes = getParameterTypes(currentParamsFromStacks);
+		 Method m;
+		try {
+			logger.info("Searching for:"+selectorName+" "+Arrays.asList(parameterTypes));
+			m = realJavaObjectRequested.getClass().getMethod(selectorName,parameterTypes);
+		} catch (NoSuchMethodException e) {
+			m=null;
+			logger.info("Parmeter Match failed:"+m+"#" +parameterTypes.length+
+			" vs "+selectorName);
 		}
-		return null;
+		 return m;
+
+//		for(Method m:realJavaObjectRequested.getClass().getMethods()){
+//
+//
+//			if(m.getName().equals(selectorName)){
+//				if(m.getParameterTypes().length == expectedParameters) {
+//
+//
+//
+//					logger.info("FOUND:"+m);
+//					return m;
+//				}else{
+//					logger.info("Parmeter Match failed:"+m+"#" +m.getParameterTypes().length+
+//							" vs "+selectorName);
+//				}
+//
+//			}
+//		}
+//		return null;
 	}
 
 
@@ -214,11 +235,27 @@ public class JavaProxyObject extends SqueakObject {
 	}
 
 
+
+	 private Class<?>[] getParameterTypes(Object[] params) {
+	        Class<?>[] result = new Class<?>[0];
+	        if (params != null) {
+	            result = new Class<?>[params.length];
+	            for (int i = 0; i < params.length; i++) {
+	                if (params[i] instanceof SqueakObject) {
+						result[i] = String.class;   // HACK
+					} else {
+						result[i] = params[i].getClass();
+					}
+	            }
+	        }
+	        return result;
+	    }
+
 	public void invokeAndPushResult(Method m, Stack stack,VM vm) {
 		int p=m.getParameterTypes().length;
 		Object parameters[];
 		if(p>0){
-			parameters=getParamsFromStack(stack,p);
+			parameters=currentParamsFromStacks;
 			// Ok parameters must be REVERTED
 
 			final List<Object> ltemp = Arrays.asList(parameters);
@@ -230,8 +267,10 @@ public class JavaProxyObject extends SqueakObject {
 		}
 
 		logger.info("Preparing to call "+m);
+		int pi=1;
 		for(Object px: parameters){
-			logger.info("\tParam: "+px);
+			logger.info("\tParam: "+pi+" "+px);
+			pi++;
 		}
 
 
@@ -241,7 +280,7 @@ public class JavaProxyObject extends SqueakObject {
 			convertAndPushAsResult(result,stack,vm);
 		}catch(Exception ex){
 			logger.log(Level.SEVERE, "Invoke "+m+" FAILED", ex);
-			convertAndPushAsResult(new Integer(-1),stack,vm);
+			convertAndPushAsResult(new Integer(0),stack,vm);
 		}
 
 
@@ -256,7 +295,13 @@ public class JavaProxyObject extends SqueakObject {
 	}
 
 
-    private Object[] getParamsFromStack(Stack stack, int numberOfParams) {
+	/**
+	 * This method must convert primitive SmallTalk types to Java type
+	 * @param stack
+	 * @param numberOfParams
+	 * @return
+	 */
+    private Object[] getParamsFromStackAndRemoveThem(Stack stack, int numberOfParams) {
         if (numberOfParams == 0) {
             return null;
         } else {
@@ -269,6 +314,7 @@ public class JavaProxyObject extends SqueakObject {
 					result[i] = param;
 				}
             }
+            logger.info("Parameters from stack:"+Arrays.asList(result));
             return result;
         }
     }

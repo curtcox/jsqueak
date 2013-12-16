@@ -128,19 +128,6 @@ public class PrimitiveHandler {
     private static ExpectedPrimitiveFailedException epfe =
         new ExpectedPrimitiveFailedException();
 
-    public PrimitiveFailedException failUnexpected()
-    {
-        return new UnexpectedPrimitiveFailedException();
-    }
-
-    public PrimitiveFailedException failUnexpected(Exception cause) {
-        return new UnexpectedPrimitiveFailedException(cause);
-    }
-
-    public PrimitiveFailedException failUnexpected(String cause) {
-        return new UnexpectedPrimitiveFailedException(cause);
-    }
-
     public static PrimitiveFailedException failExpected() {
         return epfe;
     }
@@ -160,7 +147,7 @@ public class PrimitiveHandler {
         if ( pos32Val < Integer.MIN_VALUE ||
              pos32Val > Integer.MAX_VALUE )
         {
-            throw failUnexpected(new ArithmeticException("long to int overflow"));
+            throw new UnexpectedPrimitiveFailedException(new ArithmeticException("long to int overflow"));
         }
 
         return pos32BitIntFor( (int) pos32Val );
@@ -223,7 +210,7 @@ public class PrimitiveHandler {
         }
         catch ( Exception e )
         {
-            throw failUnexpected(e);
+            throw new UnexpectedPrimitiveFailedException(e);
         }
     }
 
@@ -239,10 +226,10 @@ public class PrimitiveHandler {
         if ( argCount == 0 ) {
 			return makeStString( vm.image.imageFile().getAbsolutePath() );
 		} else {
-			throw failUnexpected(new UnsupportedOperationException(
-                    "Cannot set the image name yet, argument is '" +
-                    stackNonInteger( 0 ) + "'"
-                ));
+			throw new UnexpectedPrimitiveFailedException(new UnsupportedOperationException(
+			    "Cannot set the image name yet, argument is '" +
+			    stackNonInteger( 0 ) + "'"
+			));
 		}
     }
 
@@ -1090,9 +1077,11 @@ public class PrimitiveHandler {
 
             }
         } catch (UnexpectedPrimitiveFailedException pfe) {
-            pfe.printStackTrace();
+        	logger.log(Level.SEVERE, "FAILED PRIM "+index+" Arg Count:"+argCount, pfe);
+            // pfe.printStackTrace();
             return false;
         } catch(ExpectedPrimitiveFailedException pfe) {
+        	//logger.log(Level.INFO, "EXPECTED FAILED PRIM "+index+" Arg Count:"+argCount, pfe);
             return false;
         }
         return true;
@@ -2331,13 +2320,13 @@ public class PrimitiveHandler {
     int primitiveStringIndexOfAsciiInStringStartingAt() {
         int startAt = stackInteger(0);
         if(!successFlag) {
-			throw failUnexpected("startAt is not an int");
+			throw new UnexpectedPrimitiveFailedException("startAt is not an int");
 		}
         SqueakObject str = stackNonInteger(1);
         SqueakObject rcvr = stackNonInteger(3);
         byte ascii = (byte)stackInteger(2);
         if(!successFlag) {
-			throw failUnexpected("ascii is not an int");
+			throw new UnexpectedPrimitiveFailedException("ascii is not an int");
 		}
         int size = str.bitsSize();
         for(int k = startAt; k <= size; k++) {

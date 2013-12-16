@@ -77,6 +77,11 @@ public class SqueakObject extends AbstractSqueakObject implements Serializable
 
     }
 
+    public boolean isByteArray(){
+    	return (""+sqClass).equals( "Class ByteArray" );
+    }
+
+
     public SqueakObject(SqueakObjectHeader header, int objectOffset, int[] content, boolean fixByteOrder) {
         this.format = header.format;
         this.hash = header.hash;
@@ -526,12 +531,5 @@ public class SqueakObject extends AbstractSqueakObject implements Serializable
 		return false;
 	}
 
-	/** Look at asString for better description
-	 *
-	 * @return
-	 */
-	public String getSqueakClassDebugDescription(){
-		return " sqClass="+this.sqClass+"";
-	}
 
 }
