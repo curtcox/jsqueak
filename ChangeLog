@@ -1,5 +1,11 @@
-2013-12-06    <Giorgig@VT-GIORGIGIO>
+2013-12-17    <Giorgig@VT-GIORGIGIO>
 	* JSqueak 0.3: "Red Bean" First Release by Giovanni Giorgi
+	* src/java/org/squeak/potato/javainterop: Ineroperability package
+	* src/st/Behavior-java-interop.st: "javaNew" primitive code
+	* src/st/JSqueakUnitTest.st: Small unit test
+	* src/st/SystemDictionary-processStartUpList.st: Optional, call JSqueakUniutTest at the bootstrap
+
+2013-12-06    <Giorgig@VT-GIORGIGIO>
 	* src/potato/objects/ObjectTable.java: Removed usage of System.gc() which is bad design practice for new JVM. Let GC do its work.
 	* src/potato/Constants.java: Added VERSION constant
 	* (a lot of files): Added JDK logging framework to track down stuff. Removed System.{out,err} to uniform this use

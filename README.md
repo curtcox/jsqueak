@@ -3,23 +3,10 @@ JSqueak -- Java implementation of the Squeak Smalltalk Virtual Machine
 
 This is a fork of JSqueak, a Java  implementation of the Squeak Smalltalk virtual machine first born in 2008
 
-http://daitangio.github.io/jsqueak is the official web site
-
-JSqueak was released under the MIT license (see the announcement[1] but also [2]).
-
-Any original code released on this repository is also released under
-the MIT license.
-
 This repository is maintained by Giovanni Giorgi (jj@gioorgi.com) 
 
 This repository has been forked from repository  of Victor Rodriguez (victorr@gmail.com)
-and merged with work from Jan Tomsa (tomy@tomsovi.com) and the potato fork [3]
-
-The Potato fork [3] with master trunk: https://svn.code.sf.net/p/potatovm/code/trunk/
-is the major trunk right now becase:
-+ supports color
-+ can read back an image saved with Squeak 2.2
-+ seems the more advanced one
+and merged with work from Jan Tomsa (tomy@tomsovi.com) and the potato fork [3] taken from https://svn.code.sf.net/p/potatovm/code/trunk/
 
 
 Jump Start
@@ -30,6 +17,14 @@ The Special bootstrap class is used for running a bunch of test at boot.
 The entry point is
  SystemDictionary << processStartUpList
  Class DisplayScreen << startUp
+
+## Requirements
+JDK 1.6.33 64bit or better. 
+Garbage Collector GC1 is the default choice for low latency.
+Suggested at least 4GB of RAM, and a 64-bit Operating System.
+Tested on MS Windows, and MAC OS X, should work without problem under Linux too.
+
+
 
 
 Java Inteoperability
@@ -48,10 +43,21 @@ Or try out a simple test class:
 				test: 1 two: 2
 ```
 
+At the time of writing you can pass easily String, Integers and java object back and forward.
+
 
 DOCUMENTATION
 --------------
-See http://potatovm.blogspot.it/ for two articles on potato VM.
+See http://potatovm.blogspot.it/ for two articles on potato VM internals.
+
+
+LICENSE
+-------------
+
+JSqueak was released under the MIT license (see the announcement[1] but also [2]).
+Any original code released on this repository is also released under
+the MIT license.
+
 
 
 GOALS

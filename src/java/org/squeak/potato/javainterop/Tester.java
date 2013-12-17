@@ -36,8 +36,13 @@ public class Tester {
 		return i+i;
 	}
 
-	public Object testOverloading(Float f){
-		return f+f;
+	public Object testOverloading(PassExample p){
+		p.value=p.value+" Passed";
+		return p;
 	}
+
+//	public Object testOverloading(Float f){
+//		return f+f;
+//	}
 
 }
