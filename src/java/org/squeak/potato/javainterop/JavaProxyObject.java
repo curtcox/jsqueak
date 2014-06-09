@@ -26,7 +26,7 @@ import org.squeak.potato.vm.VM;
  */
 public class JavaProxyObject extends SqueakObject {
 
-	Logger logger=Logger.getLogger(getClass().getName());
+	private transient Logger logger=Logger.getLogger(getClass().getName());
 
 	private Object realJavaObjectRequested;
 	/**

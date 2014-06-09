@@ -30,6 +30,7 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 import java.lang.ref.*;
 
 import org.squeak.potato.objects.ObjectTable;
@@ -61,7 +62,7 @@ public class SqueakImage implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	Logger logger=Logger.getLogger(getClass().getName());
+	transient Logger logger=Logger.getLogger(getClass().getName());
 
     public ObjectTable objectTable;
     SqueakImageHeader squeakImageHeader;
@@ -111,20 +112,35 @@ public class SqueakImage implements Serializable {
     	final String fname = filename.toString();
     	logger.info("Serializing image:"+fname);
 		//XMLEncoder out=new XMLEncoder(new FileOutputStream(fname));
-    	ObjectOutputStream out= new ObjectOutputStream(new FileOutputStream(fname));
+    	ObjectOutputStream out= new ObjectOutputStream(
+    			new GZIPOutputStream(
+    			new FileOutputStream(fname)));
 		logger.info("Serializing Header...");
     	out.writeObject(squeakImageHeader);
     	logger.info("Serializing objectTable...");
     	int written=0;
+    	int logLimit=1;
+    	int errors=0;
     	for(WeakReference<SqueakObject>  r:objectTable.getObjectTable()){
     		if(r.get()!=null){
     			// GG hint imitate copyStateFrom() to extract data to store...
-    			out.writeObject(r.get());
+    			Object obj=r.get();
+    			try {
+    				out.writeObject(obj);
+    			}catch( java.io.NotSerializableException nse) {
+    				if(--logLimit >=0) {
+    					logger.severe("Skipped:"+obj+" " +obj.getClass()+" ");
+    					//nse.printStackTrace();
+    				}else {
+    					// System.err.print("E");
+    				}
+    				errors ++;
+    			}
     			written++;
     		}
     	}
     	out.close();
-    	logger.info("Serializing Written:"+written+" objects");
+    	logger.info("Serializing Written:"+written+" objects. Errors:"+errors);
     // Introduce SqueakImageWriter here
     // DataOutputStream dataOutputStream = new DataOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(filename))));
     // writeImage(dataOutputStream);

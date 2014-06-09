@@ -58,7 +58,7 @@ import org.squeak.potato.image.SqueakObjectHeader;
 public class SqueakObject extends AbstractSqueakObject implements Serializable
 {//Later make variants for common formats
 
-	Logger logger=Logger.getLogger(getClass().getName());
+	private transient Logger logger=Logger.getLogger(getClass().getName());
 	private static final long serialVersionUID = 1L;
 
 	public short hash;        //12-bit Squeak hash

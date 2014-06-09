@@ -966,7 +966,7 @@ public class VM {
 					(so.isByteArray()?"*ByteArray*"+(so.bits) :newRs)+" << "+ selector +v);
     	}else{
 	    	circularBuffer.add((++sendsPrinted)+" ["+
-					(newRcvr!=null?newRcvr.getClass():"null")
+					(newRcvr!=null? (""+newRcvr.getClass()):"null")
 					+"] "+
 				newRs+" << "+ selector +v);
 
