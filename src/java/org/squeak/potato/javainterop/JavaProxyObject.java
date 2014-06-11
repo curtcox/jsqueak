@@ -2,6 +2,10 @@ package org.squeak.potato.javainterop;
 
 import static org.squeak.potato.objects.SpecialObjectConstants.splOb_ClassString;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,17 +22,17 @@ import org.squeak.potato.vm.VM;
 
 
 /**
- * A special Squeak Object which can proxy real Java instances
- * TODO: Enable support for other java types
- * TODO:
+ * A special Squeak Object which can proxy real Java instances.
+ * Proxed object can be saved only if serailized
+ * 
  * @author Giorgig
  *
  */
-public class JavaProxyObject extends SqueakObject {
+public class JavaProxyObject extends SqueakObject implements Externalizable{
 
 	private transient Logger logger=Logger.getLogger(getClass().getName());
 
-	private Object realJavaObjectRequested;
+	private transient Object realJavaObjectRequested;
 	/**
 	 *
 	 */
@@ -36,8 +40,10 @@ public class JavaProxyObject extends SqueakObject {
 
 	private Object[] currentParamsFromStacks;
 
-	public JavaProxyObject() {
+	private final String pseudoString;
 
+	public JavaProxyObject() {
+		pseudoString="???";
 	}
 
 	public JavaProxyObject(SqueakImage image,String fullClassName){
@@ -51,7 +57,7 @@ public class JavaProxyObject extends SqueakObject {
 
 		try {
 			realJavaObjectRequested=Thread.currentThread().getContextClassLoader().loadClass(fullClassName).newInstance();
-			String pseudoString=realJavaObjectRequested.hashCode()+" @ " +fullClassName;
+			pseudoString = realJavaObjectRequested.hashCode()+" @ " +fullClassName;
 			logger.info("Java proxy OK");
 
 			this.bits = new byte[pseudoString.length()];
@@ -66,15 +72,15 @@ public class JavaProxyObject extends SqueakObject {
 
 	}
 
-//	public JavaProxyObject(SqueakImage img) {
-//		super(img);
-//
-//	}
-//
-//	public JavaProxyObject(SqueakImage img, SqueakObject cls,
-//			int indexableSize, SqueakObject filler) {
-//		super(img, cls, indexableSize, filler);
-//	}
+	//	public JavaProxyObject(SqueakImage img) {
+	//		super(img);
+	//
+	//	}
+	//
+	//	public JavaProxyObject(SqueakImage img, SqueakObject cls,
+	//			int indexableSize, SqueakObject filler) {
+	//		super(img, cls, indexableSize, filler);
+	//	}
 
 	public JavaProxyObject(SqueakImage image, Object instance) {
 		super(image,
@@ -87,7 +93,7 @@ public class JavaProxyObject extends SqueakObject {
 		System.arraycopy(byteString, 0, this.bits, 0, byteString.length);
 
 		realJavaObjectRequested=instance;
-		String pseudoString=realJavaObjectRequested.hashCode()+" @ " +fullClassName;
+		pseudoString=realJavaObjectRequested.hashCode()+" @ " +fullClassName;
 		logger.info("Java proxy From Instance OK");
 		this.bits = new byte[pseudoString.length()];
 		System.arraycopy(pseudoString.getBytes(), 0, this.bits, 0, pseudoString.getBytes().length);
@@ -115,50 +121,50 @@ public class JavaProxyObject extends SqueakObject {
 	public Method translate2JavaMethod(String smallTalkSelectorName,Stack stack) {
 		int expectedParameters=
 				smallTalkSelectorName.contains(":")?
-				smallTalkSelectorName.split(":").length:0;
-		String  selectorName;
-		if(expectedParameters>0){
-			selectorName=smallTalkSelectorName.replaceAll(":", "_");
-			// Chop last "_"
-			selectorName=selectorName.endsWith("_")?selectorName.substring(0,selectorName.length()-1):selectorName;
-			logger.info(selectorName+" Parameters Expected:"+expectedParameters);
-		}else{
-			selectorName=smallTalkSelectorName;
-			logger.info("Parameters Selector:"+selectorName);
-		}
+						smallTalkSelectorName.split(":").length:0;
+						String  selectorName;
+						if(expectedParameters>0){
+							selectorName=smallTalkSelectorName.replaceAll(":", "_");
+							// Chop last "_"
+							selectorName=selectorName.endsWith("_")?selectorName.substring(0,selectorName.length()-1):selectorName;
+							logger.info(selectorName+" Parameters Expected:"+expectedParameters);
+						}else{
+							selectorName=smallTalkSelectorName;
+							logger.info("Parameters Selector:"+selectorName);
+						}
 
 
-		 currentParamsFromStacks = getParamsFromStackAndRemoveThem(stack, expectedParameters);
-		 Class<?>[] parameterTypes = getParameterTypes(currentParamsFromStacks);
-		 Method m;
-		try {
-			logger.info("Searching for:"+selectorName+" "+Arrays.asList(parameterTypes));
-			m = realJavaObjectRequested.getClass().getMethod(selectorName,parameterTypes);
-		} catch (NoSuchMethodException e) {
-			m=null;
-			logger.info("Parmeter Match failed:"+m+"#" +parameterTypes.length+
-			" vs "+selectorName);
-		}
-		 return m;
+						currentParamsFromStacks = getParamsFromStackAndRemoveThem(stack, expectedParameters);
+						Class<?>[] parameterTypes = getParameterTypes(currentParamsFromStacks);
+						Method m;
+						try {
+							logger.info("Searching for:"+selectorName+" "+Arrays.asList(parameterTypes));
+							m = realJavaObjectRequested.getClass().getMethod(selectorName,parameterTypes);
+						} catch (NoSuchMethodException e) {
+							m=null;
+							logger.info("Parmeter Match failed:"+m+"#" +parameterTypes.length+
+									" vs "+selectorName);
+						}
+						return m;
 
-//		for(Method m:realJavaObjectRequested.getClass().getMethods()){
-//
-//
-//			if(m.getName().equals(selectorName)){
-//				if(m.getParameterTypes().length == expectedParameters) {
-//
-//
-//
-//					logger.info("FOUND:"+m);
-//					return m;
-//				}else{
-//					logger.info("Parmeter Match failed:"+m+"#" +m.getParameterTypes().length+
-//							" vs "+selectorName);
-//				}
-//
-//			}
-//		}
-//		return null;
+						//		for(Method m:realJavaObjectRequested.getClass().getMethods()){
+						//
+						//
+						//			if(m.getName().equals(selectorName)){
+						//				if(m.getParameterTypes().length == expectedParameters) {
+						//
+						//
+						//
+						//					logger.info("FOUND:"+m);
+						//					return m;
+						//				}else{
+						//					logger.info("Parmeter Match failed:"+m+"#" +m.getParameterTypes().length+
+						//							" vs "+selectorName);
+						//				}
+						//
+						//			}
+						//		}
+						//		return null;
 	}
 
 
@@ -195,25 +201,25 @@ public class JavaProxyObject extends SqueakObject {
 		 */
 		if(result instanceof String ){
 			String javaString=(String)result;
-	        byte[] byteString = javaString.getBytes();
-	        SqueakObject stString = vm.instantiateClass(SpecialObjects.getSpecialObject(splOb_ClassString), javaString.length());
-	        System.arraycopy(byteString, 0, stString.bits, 0, byteString.length);
-	        return stString;
+			byte[] byteString = javaString.getBytes();
+			SqueakObject stString = vm.instantiateClass(SpecialObjects.getSpecialObject(splOb_ClassString), javaString.length());
+			System.arraycopy(byteString, 0, stString.bits, 0, byteString.length);
+			return stString;
 		}
 
 
 		// TODO: Consider storing big Integer (!) like  splOb_ClassLargePositiveInteger
 
-//		if (result instanceof Integer && !SmallInteger.canBeSmallInt((Integer) result)) {
+		//		if (result instanceof Integer && !SmallInteger.canBeSmallInt((Integer) result)) {
 
-//          byte[] lpi_bytes = LargeInteger.squeakBytes(new BigInteger(result));
-//          SqueakObject squeak_result = vm.instantiateClass(
-//                  SpecialObjects.getSpecialObject(splOb_ClassLargePositiveInteger),
-//                  lpi_bytes.length
-//              );
-//          System.arraycopy(lpi_bytes, 0, squeak_result.bits, 0, lpi_bytes.length);
-//          squeak_result.assignLarge(big);
-//		}
+		//          byte[] lpi_bytes = LargeInteger.squeakBytes(new BigInteger(result));
+		//          SqueakObject squeak_result = vm.instantiateClass(
+		//                  SpecialObjects.getSpecialObject(splOb_ClassLargePositiveInteger),
+		//                  lpi_bytes.length
+		//              );
+		//          System.arraycopy(lpi_bytes, 0, squeak_result.bits, 0, lpi_bytes.length);
+		//          squeak_result.assignLarge(big);
+		//		}
 
 
 		//  Boolean conversion
@@ -236,20 +242,20 @@ public class JavaProxyObject extends SqueakObject {
 
 
 
-	 private Class<?>[] getParameterTypes(Object[] params) {
-	        Class<?>[] result = new Class<?>[0];
-	        if (params != null) {
-	            result = new Class<?>[params.length];
-	            for (int i = 0; i < params.length; i++) {
-	                if (params[i] instanceof SqueakObject) {
-						result[i] = String.class;   // HACK
-					} else {
-						result[i] = params[i].getClass();
-					}
-	            }
-	        }
-	        return result;
-	    }
+	private Class<?>[] getParameterTypes(Object[] params) {
+		Class<?>[] result = new Class<?>[0];
+		if (params != null) {
+			result = new Class<?>[params.length];
+			for (int i = 0; i < params.length; i++) {
+				if (params[i] instanceof SqueakObject) {
+					result[i] = String.class;   // HACK
+				} else {
+					result[i] = params[i].getClass();
+				}
+			}
+		}
+		return result;
+	}
 
 	public void invokeAndPushResult(Method m, Stack stack,VM vm) {
 		int p=m.getParameterTypes().length;
@@ -301,23 +307,38 @@ public class JavaProxyObject extends SqueakObject {
 	 * @param numberOfParams
 	 * @return
 	 */
-    private Object[] getParamsFromStackAndRemoveThem(Stack stack, int numberOfParams) {
-        if (numberOfParams == 0) {
-            return null;
-        } else {
-            Object[] result = new Object[numberOfParams];
-            for (int i = 0; i < numberOfParams; i++) {
-                Object param = stack.pop();
-                if (param instanceof SqueakObject) {
+	private Object[] getParamsFromStackAndRemoveThem(Stack stack, int numberOfParams) {
+		if (numberOfParams == 0) {
+			return null;
+		} else {
+			Object[] result = new Object[numberOfParams];
+			for (int i = 0; i < numberOfParams; i++) {
+				Object param = stack.pop();
+				if (param instanceof SqueakObject) {
 					result[i] = param.toString();
 				} else {
 					result[i] = param;
 				}
-            }
-            logger.info("Parameters from stack:"+Arrays.asList(result));
-            return result;
-        }
-    }
+			}
+			logger.info("Parameters from stack:"+Arrays.asList(result));
+			return result;
+		}
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		logger.severe("Write unsupported:"+pseudoString);
+		out.writeObject(pseudoString);
+
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException,
+	ClassNotFoundException {
+		String ps=(String) in.readObject();
+		logger.severe("read unsupported 4 proxy on"+ps);
+
+	}
 
 
 

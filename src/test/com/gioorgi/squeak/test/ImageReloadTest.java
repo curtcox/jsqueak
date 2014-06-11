@@ -32,11 +32,9 @@ THE SOFTWARE.
  continued to help whenever I was particularly stuck during the project.
  */
 
-package org.squeak.potato;
+package com.gioorgi.squeak.test;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,43 +47,41 @@ import org.squeak.potato.vm.VM;
  * @author Frank Feinbube
  * @author Robert Wierschke
  */ 
-public class Main {
+public class ImageReloadTest {
 
-	private static SqueakImage locateStartableImage(String args[]) throws IOException {
-		String name;
-
-		if (args.length == 0) {
-			name = "mini.image";
-		} else {
-			name = args[0];
-		}
-
-		File saved = new File(name);
-		if (saved.exists()) {
-			return new SqueakImage(name);
-		} else {
-			throw new FileNotFoundException("Cannot find image: " + name);
-		}
-	}
 
 	/**
-	 * @param args first arg may specify image file name
+	 *Test a minimal save and reload
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args)  {
 		try {
-			SqueakImage squeakImage;			
-			//SmallInteger.initSmallIntegerCache();
-			String fname=args[0];
-			if(fname.contains("java-")) {
-				squeakImage= SqueakImage.readJVMFormatimage(fname);
-			}else {
-				squeakImage = new SqueakImage(fname);
-			}
-			VM squeakVM = new VM(squeakImage);
 
-			squeakVM.run();
-		} catch (IOException ex) {
-			Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Error in Main.", ex);
+
+			(new File("java-test.image")).delete();
+			//SmallInteger.initSmallIntegerCache();
+			{
+				SqueakImage squeakImage = new SqueakImage("test_images/test-image1.image");
+				VM squeakVM = new VM(squeakImage);
+				// To run test and stimulate serialization bugs we *need* to execute at least 1 million opcodes
+				squeakVM.run( 1 );
+				//squeakVM.run( 1000000 );
+
+
+				squeakImage.saveImage(new File("java-test.image"));
+			}
+
+
+			SqueakImage squeakImage = SqueakImage.readJVMFormatimage("java-test.image");
+			VM squeakVM = new VM(squeakImage);
+			squeakVM.run( 1 );
+			System.err.println(" Worked baby! ");
+			// optional for further testing
+			squeakVM.run( );
+			//(new File("java-test.image")).deleteOnExit();
+		} catch (Throwable ex) {
+			Logger.getLogger(ImageReloadTest.class.getName()).log(Level.SEVERE, "Error in ImageSaveTest.", ex);
+			ex.printStackTrace();
 		}
+		System.exit(0);
 	}
 }

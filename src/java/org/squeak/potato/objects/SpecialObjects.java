@@ -22,14 +22,17 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-*/
+ */
 package org.squeak.potato.objects;
+
+import static org.squeak.potato.objects.SpecialObjectConstants.splOb_ClassInteger;
+import static org.squeak.potato.objects.SpecialObjectConstants.splOb_FalseObject;
+import static org.squeak.potato.objects.SpecialObjectConstants.splOb_NilObject;
+import static org.squeak.potato.objects.SpecialObjectConstants.splOb_TrueObject;
 
 import java.util.logging.Logger;
 
 import org.squeak.potato.image.SqueakImage;
-
-import static org.squeak.potato.objects.SpecialObjectConstants.*;
 
 /**
  * @author Daniel Ingalls
@@ -40,88 +43,90 @@ import static org.squeak.potato.objects.SpecialObjectConstants.*;
  */
 public class SpecialObjects {
 
-    public static SqueakObject nilObj;
-    public static SqueakObject falseObj;
-    public static SqueakObject trueObj;
+	public static SqueakObject nilObj;
+	public static SqueakObject falseObj;
+	public static SqueakObject trueObj;
 
-    private static Object[] specialObjects;
+	private static Object[] specialObjects;
 
-    //
-    // singleton management
-    //
+	//
+	// singleton management
+	//
 
-    private static boolean initialised = false;
+	private static boolean initialised = false;
 
-    //
-    // special objects instance creation
-    //
+	//
+	// special objects instance creation
+	//
 
-    public static void init(SqueakImage image) {
-        if(initialised) {
-			throw new IllegalStateException("special objects already initialised");
+	public static void init(SqueakImage image) {
+		if(initialised) {
+			Logger logger=Logger.getLogger(SpecialObjects.class.getName());
+			logger.info("special objects already initialised");
+			return;
 		}
-        specialObjects = image.specialObjectsArray.pointers;
-        initialised = true;
-        nilObj = getSpecialObject(splOb_NilObject);
-        falseObj = getSpecialObject(splOb_FalseObject);
-        trueObj = getSpecialObject(splOb_TrueObject);
-    }
+		specialObjects = image.specialObjectsArray.pointers;
+		initialised = true;
+		nilObj = getSpecialObject(splOb_NilObject);
+		falseObj = getSpecialObject(splOb_FalseObject);
+		trueObj = getSpecialObject(splOb_TrueObject);
+	}
 
-    //
-    // special objects management
-    //
+	//
+	// special objects management
+	//
 
-    public static SqueakObject getSpecialObject(int zeroBasedIndex) {
-        if(!initialised) {
+	public static SqueakObject getSpecialObject(int zeroBasedIndex) {
+		if(!initialised) {
 			throw new IllegalStateException("special objects not initialised");
 		}
-        return (SqueakObject)specialObjects[zeroBasedIndex];
-    }
+		return (SqueakObject)specialObjects[zeroBasedIndex];
+	}
 
 
 
-    // MEMORY ACCESS:
-    public static SqueakObject getClass(Object obj) {
-    	Logger logger=Logger.getLogger(SpecialObjects.class.getName());
-        if(!initialised) {
+	// MEMORY ACCESS:
+	public static SqueakObject getClass(Object obj) {
+		Logger logger=Logger.getLogger(SpecialObjects.class.getName());
+		if(!initialised) {
 			throw new IllegalStateException("special objects not initialised");
 		}
-        if (SmallInteger.isSmallInt(obj)) {
-            return getSpecialObject(splOb_ClassInteger);
-        }
-        // GG
-        if(obj==null){
-        	logger.severe("\n\tgetClass(null)!!\n");
-        	return null;
-        }
-        return ((SqueakObject) obj).getSqClass();
-    }
+		if (SmallInteger.isSmallInt(obj)) {
+			return getSpecialObject(splOb_ClassInteger);
+		}
+		// GG
+		if(obj==null){
+			logger.severe("\n\tgetClass(null)!!\n");
+			return null;
+		}
+		return ((SqueakObject) obj).getSqClass();
+	}
 
-    public static boolean isA(Object obj, int knownClass) {
-        if(!initialised) {
+	public static boolean isA(Object obj, int knownClass) {
+		if(!initialised) {
 			throw new IllegalStateException("special objects not initialised");
 		}
-        Object itsClass = getClass(obj);
-        return itsClass == specialObjects[knownClass];
-    }
+		Object itsClass = getClass(obj);
+		return itsClass == specialObjects[knownClass];
+	}
 
-    public static void registerSpecialObject(SqueakObject object, int specialObjSpec, int knownClass){
-        if(!initialised) {
+	public static void registerSpecialObject(SqueakObject object, int specialObjSpec, int knownClass){
+		if(!initialised) {
 			throw new IllegalStateException("special objects not initialised");
 		}
-        if (isA(object, knownClass)) {
-            specialObjects[specialObjSpec] = object;
-        } else {
-            specialObjects[specialObjSpec] = nilObj;
-        }
-    }
+		if (isA(object, knownClass)) {
+			specialObjects[specialObjSpec] = object;
+		} else {
+			specialObjects[specialObjSpec] = nilObj;
+		}
+	}
 
-    // Use this one with extreme care!
-    public static void forceRegisterSpecialObject(SqueakObject object, int specialObjectSpec) {
-        if(!initialised) {
+	// Use this one with extreme care!
+	public static void forceRegisterSpecialObject(SqueakObject object, int specialObjectSpec) {
+		if(!initialised) {
 			throw new IllegalStateException("special objects not initialised");
 		}
-        specialObjects[specialObjectSpec] = object;
-    }
+		specialObjects[specialObjectSpec] = object;
+	}
 
 }

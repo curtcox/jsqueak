@@ -2,7 +2,7 @@
 This work is a derivative of JSqueak (http://research.sun.com/projects/JSqueak). 
 
 Copyright (c) 2008  Daniel H. H. Ingalls, Sun Microsystems, Inc.  All rights reserved.
- 
+
 Portions copyright Frank Feinbube, Robert Wierschke.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,7 +22,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-*/
+ */
 package org.squeak.potato.objects;
 
 /**
@@ -33,42 +33,46 @@ package org.squeak.potato.objects;
  */
 public class SmallInteger {
 
-    // 31-bit small Integers, range:
-    public static int minSmallInt = -0x40000000;
-    public static int maxSmallInt = 0x3FFFFFFF;
-    public static int nonSmallInt = -0x50000000; //non-small and neg(so non pos32 too)
+	// 31-bit small Integers, range:
+	public static int minSmallInt = -0x40000000;
+	public static int maxSmallInt = 0x3FFFFFFF;
+	public static int nonSmallInt = -0x50000000; //non-small and neg(so non pos32 too)
 
-    public static int minCachedInt = -2000;
-    public static int maxCachedInt = 4000;
-    static Integer[] cachedInts; // reusable SmallIntegers save space, reduce GC traffic
-    
-    public static void initSmallIntegerCache() {
-        cachedInts = new Integer[maxCachedInt - minCachedInt + 1];
-        for (int i = minCachedInt; i <= maxCachedInt; i++) {
-            cachedInts[i - minCachedInt] = new Integer(i);
-        }
-    }
+	public static int minCachedInt = -2000;
+	public static int maxCachedInt = 4000;
+	static Integer[] cachedInts; // reusable SmallIntegers save space, reduce GC traffic
 
-    //SmallIntegers are stored as Java (boxed)Integers
-    public static boolean canBeSmallInt(int anInt) {
-        return (anInt >= minSmallInt) && (anInt <= maxSmallInt);
-    }
+	static {
+		initSmallIntegerCache();
+	}
 
-    public static Integer smallFromInt(int raw) {
-        if (raw >= minCachedInt && raw <= maxCachedInt) {
-            return cachedInts[raw - minCachedInt];
-        }
-        if (raw >= minSmallInt && raw <= maxSmallInt) {
-            return new Integer(raw);
-        }
-        return null;
-    }
+	private static void initSmallIntegerCache() {
+		cachedInts = new Integer[maxCachedInt - minCachedInt + 1];
+		for (int i = minCachedInt; i <= maxCachedInt; i++) {
+			cachedInts[i - minCachedInt] = new Integer(i);
+		}
+	}
 
-    public static boolean isSmallInt(Object obj) {
-        return obj instanceof Integer;
-    }
+	//SmallIntegers are stored as Java (boxed)Integers
+	public static boolean canBeSmallInt(int anInt) {
+		return (anInt >= minSmallInt) && (anInt <= maxSmallInt);
+	}
 
-    public static int intFromSmall(Integer smallInt) {
-        return smallInt.intValue();
-    }
+	public static Integer smallFromInt(int raw) {
+		if (raw >= minCachedInt && raw <= maxCachedInt) {
+			return cachedInts[raw - minCachedInt];
+		}
+		if (raw >= minSmallInt && raw <= maxSmallInt) {
+			return new Integer(raw);
+		}
+		return null;
+	}
+
+	public static boolean isSmallInt(Object obj) {
+		return obj instanceof Integer;
+	}
+
+	public static int intFromSmall(Integer smallInt) {
+		return smallInt.intValue();
+	}
 }
