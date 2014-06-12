@@ -76,7 +76,7 @@ public class ImageReloadTest {
 			squeakVM.run( 1 );
 			System.err.println(" Worked baby! ");
 			// optional for further testing
-			squeakVM.run( );
+			//squeakVM.run( );
 			//(new File("java-test.image")).deleteOnExit();
 		} catch (Throwable ex) {
 			Logger.getLogger(ImageReloadTest.class.getName()).log(Level.SEVERE, "Error in ImageSaveTest.", ex);

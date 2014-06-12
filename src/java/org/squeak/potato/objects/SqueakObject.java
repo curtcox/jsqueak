@@ -150,6 +150,7 @@ public class SqueakObject extends AbstractSqueakObject implements Serializable
 		// FIXME This causes an ArrayIndexOutOfBoundsException when loading a
 		// modern Squeak image. Maybe this indicates that restoring objects
 		// from image does not work.
+		// GG Happens after a save also in the new JVM format. Explore the reason		
 		return pointers[zeroBasedIndex];
 	}
 

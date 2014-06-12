@@ -1,5 +1,7 @@
 package org.squeak.potato.javaAccess;
 
+import java.io.Serializable;
+
 /*
 Copyright (c) 2008  Frank Feinbube, Robert Wierschke.  All rights reserved.
 
@@ -20,7 +22,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-*/ 
+ */ 
 
 /** 
  * @author Frank Feinbube
@@ -34,23 +36,28 @@ THE SOFTWARE.
  * Java JAVAMyClassXhello: 'Welt!'
  * Java JAVAMyClassXadd: 42 to: 23
  */
-public class MyClass {
+public class MyClass implements Serializable{
 
-    public static int myMethod() {
-        System.out.println("myMethod was called");
-        return 23;
-    }
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public static int myMethod(Integer arg) {
-        System.out.println("myMethod_int was called");
-        return arg;
-    }
-    
-    public static void hello(String arg) {
-        System.out.println("Hallo " + arg);
-    }
-    
-    public static int addto(Integer a, Integer b) {
-        return a+b;
-    }    
+	public static int myMethod() {
+		System.out.println("myMethod was called");
+		return 23;
+	}
+
+	public static int myMethod(Integer arg) {
+		System.out.println("myMethod_int was called");
+		return arg;
+	}
+
+	public static void hello(String arg) {
+		System.out.println("Hallo " + arg);
+	}
+
+	public static int addto(Integer a, Integer b) {
+		return a+b;
+	}    
 }

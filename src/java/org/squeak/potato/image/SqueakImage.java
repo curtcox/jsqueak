@@ -144,7 +144,7 @@ public class SqueakImage implements Serializable {
 			do {
 				// while( !(obj instanceof String && (""+obj).equals(END_OF_STREAM)) ) {
 				obj=ois.readObject();			
-				if((""+obj).equals(END_OF_STREAM)) {
+				if(END_OF_STREAM.equals(obj)) {
 					// finished
 					logger.info("OK Java Image loaded.");
 					break;

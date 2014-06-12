@@ -216,15 +216,18 @@ public class PrimitiveHandler {
 	private void primitiveSnapshot()
 	{
 
-		logger.info( "Saving the image into:" + vm.image.imageFile());
-		try
-		{
-			vm.image.saveImage( vm.image.imageFile() );
-		}
-		catch ( Exception e )
-		{
-			throw new UnexpectedPrimitiveFailedException(e);
-		}
+		logger.info("Save disabled");
+		return ;
+
+		//		logger.info( "Saving the image into:" + vm.image.imageFile());
+		//		try
+		//		{
+		//			vm.image.saveImage( vm.image.imageFile() );
+		//		}
+		//		catch ( Exception e )
+		//		{
+		//			throw new UnexpectedPrimitiveFailedException(e);
+		//		}
 	}
 
 	/**
@@ -911,9 +914,11 @@ public class PrimitiveHandler {
 					popNandPushIfOK(1, SmallInteger.smallFromInt(objectTable.spaceLeft())); // bytesLeft
 					break;
 
-				case 113:
-					System.exit(0);
-					return true;
+				case 113: 
+					/* quitPrimitive*/
+					System.exit(0);	
+					logger.severe("Asked for quit");
+					return true;					
 
 				case 116:
 					methodCache.flushMethodCacheForMethod((SqueakObject) vm.stack.top());
@@ -1047,6 +1052,7 @@ public class PrimitiveHandler {
 					//                	logger.info("FAILING 234");
 					//                	return false;
 					//                	//break;
+
 
 
 				case 235:

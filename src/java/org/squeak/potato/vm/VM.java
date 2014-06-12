@@ -40,6 +40,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,6 +55,7 @@ import org.squeak.potato.objects.SpecialObjects;
 import org.squeak.potato.objects.SqueakObject;
 import org.squeak.potato.primitives.PrimitiveFailedException;
 import org.squeak.potato.primitives.PrimitiveHandler;
+import org.squeak.potato.vm.PrimitiveDocMan.Primitive;
 
 /**
  * @author Daniel Ingalls
@@ -64,11 +66,23 @@ import org.squeak.potato.primitives.PrimitiveHandler;
  * The virtual machinery for executing Squeak bytecode.
  */
 public class VM {
-	public static final int MAX_SENDS_TO_STORE=10, STACK_DEBUG_SIZE=16;
 
-	final List<String> breakPointMonitor=Arrays.asList( /*"unhibernate","Bitmap","decodeIntFrom:"*/);
+
+
+	/** Debug Sniper Support */
+	private int bytecodeExecuted=0; /** print the byte code ran so far */
 	public static final boolean DeepDebuggerEnabled=System.getProperty("jsqueak.debug.flag") != null;
+	private PrimitiveDocMan docMan= new PrimitiveDocMan();
+	public static final int MAX_SENDS_TO_STORE=5, STACK_DEBUG_SIZE=16;
 
+	public ConcurrentSkipListSet<Integer> primitiveWithImbalance= new ConcurrentSkipListSet();
+
+
+
+	final List<String> breakPointMonitor=Arrays.asList(
+			//"quitPrimitive" 	// quitPrimitive/113
+			/*"unhibernate","Bitmap","decodeIntFrom:"*/
+			);
 	private final List<String> circularBuffer= new ArrayList<String>(MAX_SENDS_TO_STORE);
 
 	int sendsPrinted=0;
@@ -108,6 +122,12 @@ public class VM {
 	Object[] stackedSelectors = new Object[100];
 
 	public VM(SqueakImage anImage) { // canonical creation
+
+		// Pre register primitive we do not want notification (they are right so far)
+
+		primitiveWithImbalance.add(Primitive.wait.i() /*86*/);
+		primitiveWithImbalance.add(44 /**/);
+
 
 		SpecialObjects.init(anImage);
 		stack = new Stack(this);
@@ -216,7 +236,7 @@ public class VM {
 	}
 
 
-	private int totalCommands=0;
+
 	private long startTime=System.currentTimeMillis();
 
 	public void run(int howmuch) throws IOException 
@@ -227,11 +247,10 @@ public class VM {
 			//				logger.info("Instruction Executed so far:"+i);
 			//			}
 		}
-		totalCommands+=howmuch;
 		float elapsed=System.currentTimeMillis()-startTime;
-		float opcodesMillis=totalCommands/elapsed;
+		float opcodesMillis=bytecodeExecuted/elapsed;
 		float opcodeSec=opcodesMillis*1000;
-		logger.info("Returning control after executing:"+howmuch+ " Total opcodes executed:"+totalCommands+ " Opcode/sec:"+opcodeSec);
+		logger.info("Returning control after executing:"+howmuch+ " Total opcodes executed:"+bytecodeExecuted+ " Opcode/sec:"+opcodeSec);
 
 	}
 
@@ -244,7 +263,7 @@ public class VM {
 	}
 
 	public final void runOneInstruction() throws java.io.IOException {
-
+		bytecodeExecuted++;
 
 
 
@@ -995,24 +1014,35 @@ public class VM {
 		}
 
 
+		// GG TODO: Fix this mess: it quite impossible to understand
+		// because currentObj is very big sometimes
+		String currentObj;
 		// Use .getSqueakClass() if it is a Squeak Class
 		if(newRcvr instanceof SqueakObject){
 			SqueakObject so=(SqueakObject)newRcvr;
-			circularBuffer.add((++sendsPrinted)+" ["+
+			currentObj=(++sendsPrinted)+" ["+
 					so.sqClass+
 					//	    			(so.isByteArray()?"*ByteArray*":so.toString())+
 					"] "+
-					(so.isByteArray()?"*ByteArray*"+(so.bits) :newRs)+" << "+ selector +v);
+					(so.isByteArray()?"*ByteArray*"+(so.bits) :newRs)+" << "+ selector +v;
 		}else{
-			circularBuffer.add((++sendsPrinted)+" ["+
+			currentObj=(++sendsPrinted)+" ["+
 					(newRcvr!=null? (""+newRcvr.getClass()):"null")
 					+"] "+
-					newRs+" << "+ selector +v);
+					newRs+" << "+ selector +v;
 
 		}
+		circularBuffer.add(currentObj);
 
 
-		if(circularBuffer.size() > MAX_SENDS_TO_STORE){
+		//		if(currentObj.length()>70) {
+		//			circularBuffer.add(currentObj.substring(0,70)+"...");
+		//		}else {
+		//			circularBuffer.add(currentObj);
+		//		}
+
+
+		if(circularBuffer.size() >= MAX_SENDS_TO_STORE){
 			circularBuffer.remove(0);
 		}
 
@@ -1042,15 +1072,15 @@ public class VM {
 			for(String brk:breakPointMonitor){
 				if(s.contains(brk)){
 					printStackTrace=true;
-					foundGuy=brk+" into "+s;
+					foundGuy=brk ; // +" into "+s.substring(1,10);
 					break;
 				}
 			}
 
 			if(printStackTrace){
-				logger.info("DEBUG_____START_Trigger:"+foundGuy);
+				logger.info("DEBUG_____START_Trigger:"+foundGuy+" "+bytecodeExecuted);
 				prettyPrintDebugStackTrace();
-				logger.info("DEBUG______ENDS");
+				//logger.info("DEBUG______ENDS");
 			}
 		}
 
@@ -1307,33 +1337,62 @@ public class VM {
 					&& !((primIndex >= 43 && primIndex <= 48))
 
 					) {
-				if (DeepDebuggerEnabled && stack.sp != (spBefore - argCount)) {
+				if (DeepDebuggerEnabled && stack.sp != (spBefore - argCount) && (!primitiveWithImbalance.contains(primIndex))) {
+
 					logger.severe("***Stack imbalance on primitive #"
-							+ primIndex);
+							+ docMan.getDoc(primIndex));
+					primitiveWithImbalance.add(primIndex);
 				}
 			} else {
-				if (DeepDebuggerEnabled && stack.sp != spBefore) {
-					logger.severe("***Stack imbalance on primitive #"
-							+ primIndex + " (Primitive FAILED status)");
-				}
+
+
+				//				if (DeepDebuggerEnabled && stack.sp != spBefore) {
+				//					logger.severe("***Stack imbalance on primitive #"
+				//							+ primIndex + " (Primitive FAILED status)");
+				//				}
 				if (primIndex == 103) {
 					return success; // scan chars
 				}
 				if (primIndex == 230) {
 					return success; // yield
 				}
-				if (primIndex == 19) {
+				if (primIndex == 19) {  
 					return success; // fail
 				}
-				if(DeepDebuggerEnabled) {
-					logger.severe("At bytecount " + byteCount
-							+ " failed primitive #" + primIndex);
+
+
+				boolean isNot2IgnoreImbalance=!((primIndex >= 81 && primIndex <= 88)) && !((primIndex >= 43 && primIndex <= 48));
+
+				// if (!((primIndex >= 81 && primIndex <= 88)) && !((primIndex >= 43 && primIndex <= 48))
+
+
+				if (isNot2IgnoreImbalance && DeepDebuggerEnabled && stack.sp != (spBefore - argCount) && (!primitiveWithImbalance.contains(primIndex))) {
+
+					logger.severe("*** Possible Stack imbalance on primitive #"
+							+ docMan.getDoc(primIndex)+ " (Primitive FAILED status) ");
+					primitiveWithImbalance.add(primIndex);
+
+					prettyPrintDebugStackTrace();
 				}
-				if (primIndex == 80) {
+
+
+
+				// MMmm this seems wrong suggestion
+				//				if(DeepDebuggerEnabled) {
+				//					logger.severe("At bytecount " + byteCount
+				//							+ " failed primitive #" + primIndex);
+				//				}
+				if (primIndex == 80 /* blockCopy */) {
 					// dumpStack();
 					// int a=primIndex; } // <-- break here
 				}
 			}
+
+
+
+
+
+
 
 			return success;
 		}

@@ -327,16 +327,31 @@ public class JavaProxyObject extends SqueakObject implements Externalizable{
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		logger.severe("Write unsupported:"+pseudoString);
+
+		logger.severe("Write unsupported:"+pseudoString);		
 		out.writeObject(pseudoString);
+
+		//		if(realJavaObjectRequested instanceof Serializable) {
+		//			out.writeObject(realJavaObjectRequested);
+		//		}else {		
+		//			logger.severe("Write unsupported:"+pseudoString);		
+		//			out.writeObject(pseudoString);			
+		//		}
 
 	}
 
 	@Override
-	public void readExternal(ObjectInput in) throws IOException,
-	ClassNotFoundException {
-		String ps=(String) in.readObject();
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+
+		Object ps=in.readObject();
 		logger.severe("read unsupported 4 proxy on"+ps);
+		//		if(ps instanceof String) {
+		//			logger.severe("read unsupported 4 proxy on"+ps);
+		//			realJavaObjectRequested= new Object();
+		//		}else {
+		//			realJavaObjectRequested=ps;
+		//			logger.severe("Proxy re-hydratated. (Experimental)");
+		//		}
 
 	}
 

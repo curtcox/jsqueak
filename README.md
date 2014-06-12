@@ -46,6 +46,14 @@ Or try out a simple test class:
 At the time of writing you can pass easily String, Integers and java object back and forward.
 
 
+## Debug support
+A strong debug support is provided.
+Use 
+ -Djsqueak.debug.flag=true
+to enable it
+The breakPointMonitor vatiable defined in VM can set a list of selector to trigger the debug sniper.
+
+
 DOCUMENTATION
 --------------
 See http://potatovm.blogspot.it/ for two articles on potato VM internals.

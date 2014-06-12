@@ -10,8 +10,8 @@
 <listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.squeak.potato.Main"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="java-test.image"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="micro.image"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="JSqueak"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1g -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:CompileThreshold=5000"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx256m -Xms256m -XX:CompileThreshold=5000 -Djsqueak.debug.flag=true"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:JSqueak/test_images}"/>
 </launchConfiguration>
