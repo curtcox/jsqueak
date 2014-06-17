@@ -7,7 +7,7 @@ import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -96,7 +96,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            logger.log(Level.SEVERE, "I/O Error", e);
+            logger.error "I/O Error", e);
         }
 
         throw fHandler.primitiveFailed();
@@ -124,7 +124,7 @@ class FileSystemPrimitives
         }
         catch (IOException e)
         {
-            logger.log(Level.SEVERE, "I/O Error", e);
+            logger.error "I/O Error", e);
         }
 
         throw fHandler.primitiveFailed();
@@ -149,7 +149,7 @@ class FileSystemPrimitives
         }
         catch (IOException e)
         {
-            logger.log(Level.SEVERE, "I/O Error", e);
+            logger.error "I/O Error", e);
         }
 
         throw fHandler.primitiveFailed();
@@ -189,7 +189,7 @@ class FileSystemPrimitives
         catch (  FileNotFoundException e )
         {
 
-        	logger.log(Level.SEVERE, "File Not found:"+fileName, e);
+        	logger.error "File Not found:"+fileName, e);
         }
 
         throw fHandler.primitiveFailed();
@@ -230,7 +230,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            logger.log(Level.SEVERE, "I/O Error", e);
+            logger.error "I/O Error", e);
         }
 
         throw fHandler.primitiveFailed();
@@ -258,7 +258,7 @@ class FileSystemPrimitives
         }
         catch (IOException e)
         {
-            logger.log(Level.SEVERE, "I/O Error", e);
+            logger.error "I/O Error", e);
         }
 
         throw fHandler.primitiveFailed();
@@ -306,7 +306,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            logger.log(Level.SEVERE, "I/O Error", e);
+            logger.error "I/O Error", e);
         }
 
         throw fHandler.primitiveFailed();
@@ -348,7 +348,7 @@ class FileSystemPrimitives
         }
         catch ( IOException e )
         {
-            logger.log(Level.SEVERE, "I/O Error", e);
+            logger.error "I/O Error", e);
         }
 
         throw fHandler.primitiveFailed();

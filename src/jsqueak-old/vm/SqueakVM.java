@@ -25,7 +25,7 @@ package JSqueak.vm;
 
 import java.io.FileInputStream;
 import java.util.Arrays;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 import JSqueak.Squeak;
 import JSqueak.display.ScreenFactory;

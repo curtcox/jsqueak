@@ -22,7 +22,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-*/
+ */
 
 package org.squeak.potato;
 
@@ -42,7 +42,7 @@ package org.squeak.potato;
  */
 public interface Constants {
 
-	public final static String VERSION="0.3 CodeName: Red Bean";
+	public final static String VERSION="0.3.1 DebugMaster";
 
 	// Class layout:
 	public final static int Class_superclass= 0;
@@ -50,7 +50,7 @@ public interface Constants {
 	public final static int Class_format= 2;
 	public final static int Class_name= 6;
 
-        // Context layout
+	// Context layout
 	public final static int Context_sender= 0;
 	public final static int Context_instructionPointer= 1;
 	public final static int Context_stackPointer= 2;
@@ -63,7 +63,7 @@ public interface Constants {
 	public final static int BlockContext_argumentCount= 3;
 	public final static int BlockContext_initialIP= 4;
 	public final static int BlockContext_home= 5;
-        // Stream layout:
+	// Stream layout:
 	public final static int Stream_array= 0;
 	public final static int Stream_position= 1;
 	public final static int Stream_limit= 2;
@@ -87,7 +87,7 @@ public interface Constants {
 	// MethodDict layout:
 	public final static int MethodDict_array= 1;
 	public final static int MethodDict_selectorStart= 2;
-        // Message layout
+	// Message layout
 	public final static int Message_selector= 0;
 	public final static int Message_arguments= 1;
 	public final static int Message_lookupClass= 2;
@@ -97,11 +97,11 @@ public interface Constants {
 	// Largetinteger layout:
 	public final static int Largeinteger_bytes= 0;
 	public final static int Largeinteger_neg= 1;
-        // Character layout
-        public final static int CharacterValueIndex = 0;
+	// Character layout
+	public final static int CharacterValueIndex = 0;
 
-    // WINDOW LAYOUT:
-    public static final int DEFAULT_WIDTH =  800;  // Orig was 640
-    public static final int DEFAULT_HEIGHT = 600; //   Orig was 480
+	// WINDOW LAYOUT:
+	public static final int DEFAULT_WIDTH =  800;  // Orig was 640
+	public static final int DEFAULT_HEIGHT = 600; //   Orig was 480
 
 }

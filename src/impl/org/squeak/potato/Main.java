@@ -37,9 +37,8 @@ package org.squeak.potato;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.log4j.Logger;
 import org.squeak.potato.image.SqueakImage;
 import org.squeak.potato.vm.VM;
 
@@ -72,11 +71,13 @@ public class Main {
 	 * @param args first arg may specify image file name
 	 */
 	public static void main(String[] args) {
+		Logger logger=Logger.getLogger(Main.class);
+		logger.info("JSqueak "+Constants.VERSION);
 		try {
 			SqueakImage squeakImage;			
 			//SmallInteger.initSmallIntegerCache();
 			String fname=args[0];
-			if(fname.contains("java-")) {
+			if(fname.contains(".gz")) {
 				squeakImage= SqueakImage.readJVMFormatimage(fname);
 			}else {
 				squeakImage = new SqueakImage(fname);
@@ -85,7 +86,7 @@ public class Main {
 
 			squeakVM.run();
 		} catch (IOException ex) {
-			Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Error in Main.", ex);
+			logger.error( "Error in Main.", ex);
 		}
 	}
 }

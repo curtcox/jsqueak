@@ -2,7 +2,7 @@ package JSqueak.monitor;
 
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 public class TextOnlyMonitor  implements Monitor {
 

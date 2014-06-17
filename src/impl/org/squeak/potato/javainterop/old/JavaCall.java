@@ -25,7 +25,7 @@ package org.squeak.potato.javainterop.old;
 
 import java.lang.reflect.Method;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 import org.squeak.potato.objects.SmallInteger;
 import org.squeak.potato.objects.SqueakObject;
@@ -86,7 +86,7 @@ public class JavaCall {
                 this.convertAndPushAsResult(result);
             }
         } catch (Exception ex) {
-            Logger.getLogger(JavaCall.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error(null, ex);
         }
     }
 

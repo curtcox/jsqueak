@@ -41,9 +41,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.log4j.Logger;
 import org.squeak.potato.Arithmetics;
 import org.squeak.potato.Constants;
 import org.squeak.potato.SmallTalkVMException;
@@ -87,7 +86,7 @@ public class VM {
 
 	int sendsPrinted=0;
 
-	Logger logger=Logger.getLogger(getClass().getName());
+	Logger logger=Logger.getLogger(getClass());
 
 	// static state:
 	public SqueakImage image;
@@ -255,7 +254,7 @@ public class VM {
 	}
 
 	public void run() throws IOException {
-		logger.info("JSqueak "+Constants.VERSION);
+
 		while (true) {
 			//runOneInstruction();
 			run(10000000);
@@ -1006,84 +1005,85 @@ public class VM {
 
 
 
-		// We try to print it...
-		String newRs=newRcvr+"";
-
-		if(newRs.length()>80){
-			newRs=newRs.substring(0,70)+" ??...??";
-		}
 
 
 		// GG TODO: Fix this mess: it quite impossible to understand
 		// because currentObj is very big sometimes
-		String currentObj;
 		// Use .getSqueakClass() if it is a Squeak Class
-		if(newRcvr instanceof SqueakObject){
-			SqueakObject so=(SqueakObject)newRcvr;
-			currentObj=(++sendsPrinted)+" ["+
-					so.sqClass+
-					//	    			(so.isByteArray()?"*ByteArray*":so.toString())+
-					"] "+
-					(so.isByteArray()?"*ByteArray*"+(so.bits) :newRs)+" << "+ selector +v;
-		}else{
-			currentObj=(++sendsPrinted)+" ["+
-					(newRcvr!=null? (""+newRcvr.getClass()):"null")
-					+"] "+
-					newRs+" << "+ selector +v;
+		if(DeepDebuggerEnabled) {
+			// We try to print it...
+			String newRs=newRcvr+"";
 
-		}
-		circularBuffer.add(currentObj);
+			if(newRs.length()>80){
+				newRs=newRs.substring(0,70)+" ??...??";
+			}
+			String currentObj;
+			if(newRcvr instanceof SqueakObject){
+				SqueakObject so=(SqueakObject)newRcvr;
+				currentObj=(++sendsPrinted)+" ["+
+						so.sqClass+
+						//	    			(so.isByteArray()?"*ByteArray*":so.toString())+
+						"] "+
+						(so.isByteArray()?"*ByteArray*"+(so.bits) :newRs)+" << "+ selector +v;
+			}else{
+				currentObj=(++sendsPrinted)+" ["+
+						(newRcvr!=null? (""+newRcvr.getClass()):"null")
+						+"] "+
+						newRs+" << "+ selector +v;
 
-
-		//		if(currentObj.length()>70) {
-		//			circularBuffer.add(currentObj.substring(0,70)+"...");
-		//		}else {
-		//			circularBuffer.add(currentObj);
-		//		}
-
-
-		if(circularBuffer.size() >= MAX_SENDS_TO_STORE){
-			circularBuffer.remove(0);
-		}
-
-		// logger.finer("Rcv="+newRcvr+" << "+selector);
+			}
+			circularBuffer.add(currentObj);
 
 
-		if(DeepDebuggerEnabled &&  printString(selector).equals("error:")){
-			logger.severe("--- Error! --- Sends:"+sendsPrinted);
+			//		if(currentObj.length()>70) {
+			//			circularBuffer.add(currentObj.substring(0,70)+"...");
+			//		}else {
+			//			circularBuffer.add(currentObj);
+			//		}
 
-			prettyPrintDebugStackTrace();
-			System.exit(-1000);
-			return;
-			//throw  this.primHandler.failUnexpected();
-			//dumpStack(); // <---break here
-			/*Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 100
+
+			if(circularBuffer.size() >= MAX_SENDS_TO_STORE){
+				circularBuffer.remove(0);
+			}
+
+			// logger.finer("Rcv="+newRcvr+" << "+selector);
+
+
+			if( printString(selector).equals("error:")){
+				logger.error("--- Error! --- Sends:"+sendsPrinted);
+
+				prettyPrintDebugStackTrace();
+				System.exit(-1000);
+				return;
+				//throw  this.primHandler.failUnexpected();
+				//dumpStack(); // <---break here
+				/*Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 100
 				at potato.vm.VM.dumpStack(VM.java:1328)
 				at potato.vm.VM.send(VM.java:934)
 				at potato.vm.VM.run(VM.java:665)
 				at potato.Main.main(ImageSaveTest.java:80)
-			 */
-		}
+				 */
+			}
 
-		if(DeepDebuggerEnabled){
-			boolean printStackTrace=false;
-			String foundGuy="";
-			String s=circularBuffer.get(0);
-			for(String brk:breakPointMonitor){
-				if(s.contains(brk)){
-					printStackTrace=true;
-					foundGuy=brk ; // +" into "+s.substring(1,10);
-					break;
+			if(DeepDebuggerEnabled){
+				boolean printStackTrace=false;
+				String foundGuy="";
+				String s=circularBuffer.get(0);
+				for(String brk:breakPointMonitor){
+					if(s.contains(brk)){
+						printStackTrace=true;
+						foundGuy=brk ; // +" into "+s.substring(1,10);
+						break;
+					}
+				}
+
+				if(printStackTrace){
+					logger.info("DEBUG_____START_Trigger:"+foundGuy+" "+bytecodeExecuted);
+					prettyPrintDebugStackTrace();
+					//logger.info("DEBUG______ENDS");
 				}
 			}
-
-			if(printStackTrace){
-				logger.info("DEBUG_____START_Trigger:"+foundGuy+" "+bytecodeExecuted);
-				prettyPrintDebugStackTrace();
-				//logger.info("DEBUG______ENDS");
-			}
 		}
-
 
 
 		//if(printString(selector).equals("error:"))
@@ -1111,7 +1111,7 @@ public class VM {
 					//	        		javaAdapter.invokeAndPushResult();
 					return;
 				}else{
-					logger.finer(sendsPrinted+" [ Java "+newRcvr + " Ignored: " + selector+"]");
+					logger.trace(sendsPrinted+" [ Java "+newRcvr + " Ignored: " + selector+"]");
 				}
 			}
 		}
@@ -1173,7 +1173,13 @@ public class VM {
 			currentClass = currentClass.fetchPointerNI(Constants.Class_superclass);
 		}
 
-		logger.info(""+selector);
+		//if(DeepDebuggerEnabled) {
+		String signature=startingClass+">>"+selector;
+		logger.info("DoesNotUnderstand "+signature);
+		prettyPrintDebugStackTrace();
+
+		//??? if(selector.equals("logDebuggerStackToFile")) { return null ; };
+		//}
 
 		//Cound not find a normal message -- send #doesNotUnderstand:
 		//if(printString(selector).equals("zork"))
@@ -1266,7 +1272,7 @@ public class VM {
 					+ argumentCount, Constants.Context_tempFrameStart
 					+ tempCount, SpecialObjects.nilObj);
 		} catch (IllegalArgumentException e) {
-			logger.log(Level.SEVERE, "Cannot Build new Context newMethod="+newMethod+" newRcvr="+newRcvr,e);
+			logger.error("Cannot Build new Context newMethod="+newMethod+" newRcvr="+newRcvr,e);
 			throw new SmallTalkVMException("Cannot Build new Context newMethod="+newMethod+" newRcvr="+newRcvr,e);
 		}
 
@@ -1285,7 +1291,7 @@ public class VM {
 
 		receiver = newContext.fetchPointer(Constants.Context_receiver);
 		if (receiver != newRcvr) {
-			logger.severe("receiver doesn't match:"
+			logger.error("receiver doesn't match:"
 					+"\n\t  receiver: " + receiver
 					+"\n\t  newRcvr: " + newRcvr);
 		}
@@ -1327,7 +1333,7 @@ public class VM {
 			boolean success = primHandler.doPrimitive(primIndex, argCount);
 			//            if(!success && primIndex!=19){
 			//            	if(DeepDebuggerEnabled){
-			//            		logger.severe("FAILED PRIMITIVE:"+primIndex+" ARG COUNT:"+argCount);
+			//            		logger.error("FAILED PRIMITIVE:"+primIndex+" ARG COUNT:"+argCount);
 			//            		//System.exit(0);
 			//            	}
 			//            }
@@ -1339,7 +1345,7 @@ public class VM {
 					) {
 				if (DeepDebuggerEnabled && stack.sp != (spBefore - argCount) && (!primitiveWithImbalance.contains(primIndex))) {
 
-					logger.severe("***Stack imbalance on primitive #"
+					logger.error("***Stack imbalance on primitive #"
 							+ docMan.getDoc(primIndex));
 					primitiveWithImbalance.add(primIndex);
 				}
@@ -1347,7 +1353,7 @@ public class VM {
 
 
 				//				if (DeepDebuggerEnabled && stack.sp != spBefore) {
-				//					logger.severe("***Stack imbalance on primitive #"
+				//					logger.error("***Stack imbalance on primitive #"
 				//							+ primIndex + " (Primitive FAILED status)");
 				//				}
 				if (primIndex == 103) {
@@ -1368,7 +1374,7 @@ public class VM {
 
 				if (isNot2IgnoreImbalance && DeepDebuggerEnabled && stack.sp != (spBefore - argCount) && (!primitiveWithImbalance.contains(primIndex))) {
 
-					logger.severe("*** Possible Stack imbalance on primitive #"
+					logger.error("*** Possible Stack imbalance on primitive #"
 							+ docMan.getDoc(primIndex)+ " (Primitive FAILED status) ");
 					primitiveWithImbalance.add(primIndex);
 
@@ -1379,7 +1385,7 @@ public class VM {
 
 				// MMmm this seems wrong suggestion
 				//				if(DeepDebuggerEnabled) {
-				//					logger.severe("At bytecount " + byteCount
+				//					logger.error("At bytecount " + byteCount
 				//							+ " failed primitive #" + primIndex);
 				//				}
 				if (primIndex == 80 /* blockCopy */) {

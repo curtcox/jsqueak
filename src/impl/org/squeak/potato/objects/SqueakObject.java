@@ -35,7 +35,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 import org.squeak.potato.Constants;
 import org.squeak.potato.image.SqueakImage;

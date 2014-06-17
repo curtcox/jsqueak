@@ -44,9 +44,8 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.log4j.Logger;
 import org.squeak.potato.Arithmetics;
 import org.squeak.potato.Constants;
 import org.squeak.potato.clipboard.CliboardHelper;
@@ -917,7 +916,7 @@ public class PrimitiveHandler {
 				case 113: 
 					/* quitPrimitive*/
 					System.exit(0);	
-					logger.severe("Asked for quit");
+					logger.error("Asked for quit");
 					return true;					
 
 				case 116:
@@ -1090,13 +1089,13 @@ public class PrimitiveHandler {
 				default: {
 					// undefined primitve
 					//throw primitiveFailed("undefined primitive: " + index);
-					logger.severe("undefined primitive: " + index);
+					logger.error("undefined primitive: " + index);
 					return false;
 				}
 
 			}
 		} catch (UnexpectedPrimitiveFailedException pfe) {
-			logger.log(Level.SEVERE, "FAILED PRIM "+index+" Arg Count:"+argCount, pfe);
+			logger.error("FAILED PRIM "+index+" Arg Count:"+argCount, pfe);
 			// pfe.printStackTrace();
 			return false;
 		} catch(ExpectedPrimitiveFailedException pfe) {
@@ -2216,7 +2215,7 @@ public class PrimitiveHandler {
 					vm.wait(millis);
 				}
 			} catch (InterruptedException ex) {
-				Logger.getLogger(PrimitiveHandler.class.getName()).log(Level.SEVERE, null, ex);
+				logger.error(null, ex);
 			}
 		}
 	}

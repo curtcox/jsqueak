@@ -30,7 +30,7 @@ import static org.squeak.potato.objects.SpecialObjectConstants.splOb_FalseObject
 import static org.squeak.potato.objects.SpecialObjectConstants.splOb_NilObject;
 import static org.squeak.potato.objects.SpecialObjectConstants.splOb_TrueObject;
 
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 import org.squeak.potato.image.SqueakImage;
 
@@ -96,7 +96,7 @@ public class SpecialObjects {
 		}
 		// GG
 		if(obj==null){
-			logger.severe("\n\tgetClass(null)!!\n");
+			logger.error("\n\tgetClass(null)!!\n");
 			return null;
 		}
 		return ((SqueakObject) obj).getSqClass();

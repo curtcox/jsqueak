@@ -40,7 +40,7 @@ import java.awt.image.SinglePixelPackedSampleModel;
 import java.awt.image.WritableRaster;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 /**
  * @author Dan Ingalls
@@ -66,7 +66,7 @@ public class DisplayAdapter {
         } else if (depth == 32){
             result = createDisplayAdapter32(storage, width, height);
         } else {
-//        	logger.severe("Unsupported display depth " + depth+" Running at 32bit");
+//        	logger.error("Unsupported display depth " + depth+" Running at 32bit");
 //        	result = createDisplayAdapter32(storage, width, height);
 
             throw new IllegalArgumentException("Unsupported display depth " + depth

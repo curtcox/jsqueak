@@ -35,9 +35,8 @@ THE SOFTWARE.
 package com.gioorgi.squeak.test;
 
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.log4j.Logger;
 import org.squeak.potato.image.SqueakImage;
 import org.squeak.potato.vm.VM;
 
@@ -48,7 +47,7 @@ import org.squeak.potato.vm.VM;
  * @author Robert Wierschke
  */ 
 public class ImageReloadTest {
-
+	static transient Logger logger=Logger.getLogger(ImageReloadTest.class);
 
 	/**
 	 *Test a minimal save and reload
@@ -79,7 +78,7 @@ public class ImageReloadTest {
 			//squeakVM.run( );
 			//(new File("java-test.image")).deleteOnExit();
 		} catch (Throwable ex) {
-			Logger.getLogger(ImageReloadTest.class.getName()).log(Level.SEVERE, "Error in ImageSaveTest.", ex);
+			logger.error("Error in ImageSaveTest.", ex);
 			ex.printStackTrace();
 		}
 		System.exit(0);

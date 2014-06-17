@@ -39,11 +39,10 @@ import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.log4j.Logger;
 import org.squeak.potato.objects.ObjectTable;
 import org.squeak.potato.objects.SqueakObject;
 import org.squeak.potato.vm.VM;
@@ -85,7 +84,7 @@ public class SqueakImage implements Serializable {
 			this.imageInputStream = new SqueakImageInputStream(fileName);
 			imageFile = new File( fileName );
 		} catch (IOException ex) {
-			Logger.getLogger(SqueakImage.class.getName()).log(Level.SEVERE,
+			Logger.getLogger(SqueakImage.class.getName()).error(
 					"cannot read image file " + fileName, ex);
 		}
 		objectTable = new ObjectTable();
@@ -167,7 +166,7 @@ public class SqueakImage implements Serializable {
 
 	public void saveImage(File filename) throws Exception {
 
-		final String fname = filename.toString();
+		final String fname = filename.toString()+".gz";
 		logger.info("Serializing image:"+fname);
 		//XMLEncoder out=new XMLEncoder(new FileOutputStream(fname));
 		ObjectOutputStream out= new ObjectOutputStream(
@@ -188,7 +187,7 @@ public class SqueakImage implements Serializable {
 				out.writeObject(obj);
 				//    			}catch( java.io.NotSerializableException nse) {
 				//    				if(--logLimit >=0) {
-				//    					logger.severe("Skipped:"+obj+" " +obj.getClass()+" ");
+				//    					logger.error("Skipped:"+obj+" " +obj.getClass()+" ");
 				//    					//nse.printStackTrace();
 				//    				}else {
 				//    					// System.err.print("E");

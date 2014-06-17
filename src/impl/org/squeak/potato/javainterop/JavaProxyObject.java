@@ -10,9 +10,8 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.log4j.Logger;
 import org.squeak.potato.image.SqueakImage;
 import org.squeak.potato.objects.SmallInteger;
 import org.squeak.potato.objects.SpecialObjects;
@@ -64,7 +63,7 @@ public class JavaProxyObject extends SqueakObject implements Externalizable{
 			System.arraycopy(pseudoString.getBytes(), 0, this.bits, 0, pseudoString.getBytes().length);
 
 		} catch(Exception e) {
-			logger.log(Level.SEVERE,"Cannot proceed:",e);
+			logger.error("Cannot proceed:",e);
 			throw new JavaProxyRuntimeException("Cannot create instance of "+fullClassName,e);
 		}
 
@@ -285,7 +284,7 @@ public class JavaProxyObject extends SqueakObject implements Externalizable{
 			logger.info("<< "+m+" returns:"+result);
 			convertAndPushAsResult(result,stack,vm);
 		}catch(Exception ex){
-			logger.log(Level.SEVERE, "Invoke "+m+" FAILED", ex);
+			logger.error("Invoke "+m+" FAILED", ex);
 			convertAndPushAsResult(new Integer(0),stack,vm);
 		}
 
@@ -328,13 +327,13 @@ public class JavaProxyObject extends SqueakObject implements Externalizable{
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 
-		logger.severe("Write unsupported:"+pseudoString);		
+		logger.error("Write unsupported:"+pseudoString);		
 		out.writeObject(pseudoString);
 
 		//		if(realJavaObjectRequested instanceof Serializable) {
 		//			out.writeObject(realJavaObjectRequested);
 		//		}else {		
-		//			logger.severe("Write unsupported:"+pseudoString);		
+		//			logger.error("Write unsupported:"+pseudoString);		
 		//			out.writeObject(pseudoString);			
 		//		}
 
@@ -344,13 +343,13 @@ public class JavaProxyObject extends SqueakObject implements Externalizable{
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 
 		Object ps=in.readObject();
-		logger.severe("read unsupported 4 proxy on"+ps);
+		logger.error("read unsupported 4 proxy on"+ps);
 		//		if(ps instanceof String) {
-		//			logger.severe("read unsupported 4 proxy on"+ps);
+		//			logger.error("read unsupported 4 proxy on"+ps);
 		//			realJavaObjectRequested= new Object();
 		//		}else {
 		//			realJavaObjectRequested=ps;
-		//			logger.severe("Proxy re-hydratated. (Experimental)");
+		//			logger.error("Proxy re-hydratated. (Experimental)");
 		//		}
 
 	}
